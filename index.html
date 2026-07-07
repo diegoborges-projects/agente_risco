@@ -367,6 +367,11 @@ body.light-mode .drop-zone::before, body.light-mode .drop-zone::after { border-c
 .k-btn { background: var(--bg4); border: 1px solid var(--border2); color: var(--text2); cursor: pointer; border-radius: 2px; padding: 3px 6px; font-size: 10px; transition: all .2s; }
 .k-btn:hover { background: var(--bg2); color: var(--text); border-color: var(--text3); }
 .k-btn.del:hover { color: var(--accent); border-color: var(--accent); }
+/* Garante que os modais de projetos abram sempre por cima do modal de Clientes */
+#nc-modal-overlay, #csat-modal-overlay, #score-modal-overlay, 
+#fca-modal-overlay, #termo-modal-overlay, #status-history-modal, #lbp-modal {
+  z-index: 2000 !important;
+}
 </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
@@ -409,7 +414,6 @@ body.light-mode .drop-zone::before, body.light-mode .drop-zone::after { border-c
       <button class="btn" onclick="showUpload()">↑ Novo arquivo</button>
       
       <span id="csat-file-label" style="font-family:var(--mono);font-size:10px;color:var(--ok);display:none"></span>
-      <button class="btn btn-accent" id="btn-ai" onclick="runAI()">Analisar com IA ↗</button>
     </div>
   </div>
   <div class="app-body">
@@ -427,7 +431,6 @@ body.light-mode .drop-zone::before, body.light-mode .drop-zone::after { border-c
         <div class="nav-item" onclick="showView('coordinators')" id="nav-coordinators"><div class="nav-dot"></div><span>Coordenadores</span></div>
         <div class="nav-item" onclick="showView('visibilidade')" id="nav-visibilidade"><div class="nav-dot"></div><span>Visibilidade</span></div>
         <div class="nav-item" onclick="showView('score-config')" id="nav-score-config"><div class="nav-dot"></div><span>Risk Score</span></div>
-        <div class="nav-item" onclick="showView('ai')" id="nav-ai"><div class="nav-dot"></div><span>Análise IA</span></div>
         <div class="nav-item" onclick="showView('backlog')" id="nav-backlog"><div class="nav-dot"></div><span>Backlog (Ações)</span></div>
       </div>
       <div class="sidebar-stats" id="sidebar-stats"></div>
@@ -463,7 +466,24 @@ body.light-mode .drop-zone::before, body.light-mode .drop-zone::after { border-c
           <select class="filter-select" id="filt-status" onchange="filterProjects()"><option value="">Todos os status</option><option>EM ANDAMENTO</option><option>SUSPENSO</option></select>
           <select class="filter-select" id="filt-termo" onchange="filterProjects()"><option value="">Todos os termômetros</option><option>SAUDÁVEL</option><option>ATENÇÃO</option><option>CRÍTICO</option></select>
           <select class="filter-select" id="filt-risco" onchange="filterProjects()"><option value="">Todos os riscos</option><option>Crítico</option><option>Atenção</option><option>Baixo</option></select>
-          <select class="filter-select" id="filt-unidade" onchange="filterProjects()"><option value="">Todas as unidades</option></select>
+          <select class="filter-select" id="filt-grp" onchange="filterProjects()">
+            <option value="">Todos os GRPs</option>
+            <option value="Alessandro Vicentini">Alessandro Vicentini</option>
+            <option value="Daniela Dias">Daniela Dias</option>
+            <option value="Douglas Xavier">Douglas Xavier</option>
+            <option value="Lucas Eduardo">Lucas Eduardo</option>
+            <option value="Marden Chaves">Marden Chaves</option>
+            <option value="Sem regional">Sem regional</option>
+          </select>
+
+          <div style="position:relative" id="proj-unidade-wrap">
+            <button class="filter-select" id="proj-unidade-trigger" onclick="toggleProjUnidadeDropdown(event)" style="min-width:180px;text-align:left;display:flex;justify-content:space-between;align-items:center;cursor:pointer">
+              <span id="proj-unidade-label">Todas as unidades</span>
+              <span style="opacity:.5;font-size:10px">▾</span>
+            </button>
+            <div id="proj-unidade-dropdown" style="display:none;position:absolute;top:calc(100% + 4px);left:0;min-width:240px;background:var(--bg3);border:1px solid var(--border2);border-radius:3px;z-index:200;padding:4px 0;box-shadow:0 8px 24px rgba(0,0,0,.5);max-height:300px;overflow-y:auto;">
+            </div>
+          </div>
           <select class="filter-select" id="filt-coord" onchange="filterProjects()"><option value="">Todos os coordenadores</option></select>
           <select class="filter-select" id="filt-modelo" onchange="filterProjects()"><option value="">Todos os modelos</option><option value="58">Projeto Inicial (58)</option><option value="59">Segunda Fase (59)</option></select>
           <select class="filter-select" id="filt-csat" onchange="filterProjects()" style="display:none">
@@ -582,19 +602,9 @@ body.light-mode .drop-zone::before, body.light-mode .drop-zone::after { border-c
         <div class="section-header"><div class="section-title">Por Unidade</div><div class="section-tag" id="units-count-tag"></div></div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Unidade</th><th style="text-align:center">Total</th><th style="text-align:center">Críticos</th><th style="text-align:center">Atenção</th><th style="text-align:center">Baixo</th><th style="text-align:center">Suspensos</th><th style="text-align:center">% crítico</th><th style="min-width:140px">Distribuição</th><th style="text-align:center">Análise IA</th></tr></thead>
+            <thead><tr><th>Unidade</th><th style="text-align:center">Total</th><th style="text-align:center">Críticos</th><th style="text-align:center">Atenção</th><th style="text-align:center">Baixo</th><th style="text-align:center">Suspensos</th><th style="text-align:center">% crítico</th><th style="min-width:140px">Distribuição</th></tr></thead>
             <tbody id="units-tbody"></tbody>
           </table>
-        </div>
-        <div id="unit-ai-panel" style="display:none;margin-top:20px">
-          <div class="panel">
-            <div class="panel-header" style="display:flex;justify-content:space-between;align-items:center">
-              <span class="panel-title" id="unit-ai-title">Análise IA — Unidade</span>
-              <button class="btn" style="font-size:9px;padding:4px 10px" onclick="document.getElementById('unit-ai-panel').style.display='none'">✕ fechar</button>
-            </div>
-            <div style="display:flex;justify-content:flex-end;margin-bottom:6px"><button class="open-tab-btn" onclick="openInTab('unit-ai-output','Análise por Unidade — Relatório')">&#8599; Abrir em outra aba</button></div>
-        <div id="unit-ai-output" style="min-height:120px"></div>
-          </div>
         </div>
       </div>
 
@@ -608,28 +618,27 @@ body.light-mode .drop-zone::before, body.light-mode .drop-zone::after { border-c
         </div>
       </div>
 
-      <div class="view" id="view-ai">
-        <div class="section-header"><div class="section-title">Análise de Riscos com IA</div><div class="section-tag">Claude Sonnet</div></div>
-        <div class="ai-toolbar">
-          <div class="ai-toolbar-text"><strong>Análise inteligente de riscos</strong> — Cruza todos os fatores negativos do portfólio e gera um relatório executivo com riscos identificados, tendências e recomendações priorizadas.</div>
-          <button class="btn btn-accent" id="btn-ai2" onclick="runAI()">Gerar análise ↗</button>
-        </div>
-        <div style="display:flex;justify-content:flex-end;margin-bottom:6px"><button class="open-tab-btn" onclick="openInTab('ai-output','Análise de Risco ERP — Relatório Executivo')">&#8599; Abrir em outra aba</button></div>
-        <div class="ai-output" id="ai-output">
-          <div class="ai-output-placeholder">Clique em "Gerar análise" para obter o relatório executivo de riscos.</div>
-        </div>
-      </div>
-
       <div class="view" id="view-backlog">
         <div class="section-header">
           <div class="section-title">Backlog de Ações</div>
           <div class="section-tag">Gestão de ocorrências e planos de ação (Salvo localmente)</div>
         </div>
         
-        <div class="filters-row" style="margin-bottom: 16px;">
-          <select class="filter-select" id="kb-filt-regional" onchange="renderKanban()">
-            <option value="">Todas as Regionais</option>
+       <div class="filters-row" style="margin-bottom: 16px;">
+          <select class="filter-select" id="kb-filt-grp" onchange="renderKanban()">
+            <option value="">Todos os GRPs</option>
+            <option value="Alessandro Vicentini">Alessandro Vicentini</option>
+            <option value="Daniela Dias">Daniela Dias</option>
+            <option value="Douglas Xavier">Douglas Xavier</option>
+            <option value="Lucas Eduardo">Lucas Eduardo</option>
+            <option value="Marden Chaves">Marden Chaves</option>
+            <option value="Sem regional">Sem regional</option>
           </select>
+
+          <select class="filter-select" id="kb-filt-regional" onchange="renderKanban()">
+            <option value="">Todas as Unidades</option>
+          </select>
+          
           <button class="btn btn-accent" onclick="openKanbanForm()">+ Nova Ação</button>
           <button class="btn" onclick="clearKanbanBoard()" style="margin-left:auto; font-size:9px;">🗑️ Limpar Quadro</button>
         </div>
@@ -735,25 +744,12 @@ body.light-mode .drop-zone::before, body.light-mode .drop-zone::after { border-c
     <div class="panel"><div class="panel-header"><span class="panel-title">Tendência de reclamação por unidade</span></div><div class="panel-body" id="csat-x-unidade"></div></div>
   </div>
 
-  <div class="section-header" style="margin-top:4px">
-    <div class="section-title" style="font-size:14px">Análise de Sentimento (IA)</div>
-    <div class="section-tag">comentários dos clientes</div>
-  </div>
-  <div class="ai-toolbar" style="margin-bottom:16px">
-    <div class="ai-toolbar-text"><strong>Análise profunda de sentimento</strong> — O modelo lê os comentários dos clientes, cruza com os dados de conformidade e identifica padrões, tendências e projetos em risco de reclamação.</div>
-    <button class="btn btn-accent" id="btn-csat-ai" onclick="runCSATAI()">Analisar sentimento ↗</button>
-  </div>
-  <div style="display:flex;justify-content:flex-end;margin-bottom:6px"><button class="open-tab-btn" onclick="openInTab('csat-ai-output','Análise de Sentimento CSAT — Relatório')">&#8599; Abrir em outra aba</button></div>
-  <div class="ai-output" id="csat-ai-output">
-    <div class="ai-output-placeholder">Clique em "Analisar sentimento" para obter a análise.</div>
-  </div>
-
   <div class="section-header" style="margin-top:24px">
     <div class="section-title" style="font-size:14px">Motor de Risco: Histórico de Pesquisas</div>
     <div class="section-tag" id="csat-table-tag"></div>
   </div>
   
-  <div class="filters-row">
+<div class="filters-row">
     <select class="filter-select" id="csat-filt-nota" onchange="renderCSATTable()">
       <option value="">Todas as notas</option>
       <option>MUITO SATISFEITO</option><option>SATISFEITO</option>
@@ -762,17 +758,18 @@ body.light-mode .drop-zone::before, body.light-mode .drop-zone::after { border-c
     <select class="filter-select" id="csat-filt-tipo" onchange="renderCSATTable()">
       <option value="">Todos os tipos</option><option>ANDAMENTO</option><option>CONCLUSÃO</option>
     </select>
-    <select class="filter-select" id="csat-filt-unidade" onchange="renderCSATTable()">
-      <option value="">Todas as unidades</option>
-    </select>
-    <select class="filter-select" id="csat-filt-unidade" onchange="renderCSATTable()">
-      <option value="">Todas as unidades</option>
-    </select>
+    
     <select class="filter-select" id="csat-filt-regional" onchange="renderCSATTable()">
       <option value="">Todas as regionais</option>
     </select>
+    <select class="filter-select" id="csat-filt-unidade" onchange="renderCSATTable()">
+      <option value="">Todas as unidades</option>
+    </select>
+    <select class="filter-select" id="csat-filt-mesano" onchange="renderCSATTable()">
+      <option value="">Todos os meses</option>
+    </select>
   </div>
-  
+
   <div class="table-wrap">
     <table>
       <thead><tr>
@@ -787,7 +784,6 @@ body.light-mode .drop-zone::before, body.light-mode .drop-zone::after { border-c
   </div>
 </div>
 
-      </div>
       <!-- ═══ VISÃO TERMÔMETRO ═══ -->
       <div class="view" id="view-termometro">
         <div class="section-header">
@@ -965,8 +961,25 @@ function calcScore(p){
 
   // ── Dim 3: CSAT ──
   if(csatLoaded){
-    // Última pesquisa negativa
-    if(p.csatNeg>0) raw+=WEIGHTS['CSAT negativo']||0;
+    // Última pesquisa negativa com Multiplicador Dinâmico do Cérebro
+    if(p.csatNeg>0) {
+      let baseWeight = WEIGHTS['CSAT negativo'] || 0;
+      let finalWeight = baseWeight;
+      
+      if (p.surveys && p.surveys.length > 0) {
+        const lastSurvey = p.surveys[p.surveys.length - 1];
+        const sr = analyzeCSATRisk(lastSurvey, null, null);
+        const cerebro = sr.cerebroScore;
+        
+        if (cerebro > 4) {
+          const steps = Math.floor((cerebro - 4) / 2);
+          finalWeight = baseWeight * (1.0 + steps * 0.2);
+        }
+      }
+      raw += Math.min(30, Math.round(finalWeight));
+    }
+
+    // CSAT negativo sem FCA válido:
 
     // CSAT negativo sem FCA válido:
     // FCA válido = DE_PESQUISA=SIM + NUMERO_PESQUISA == nro da última pesquisa negativa
@@ -1460,6 +1473,7 @@ function mapProjects(headers,rows){
     unidade:    col('unidade'),
     coordenador:col('coordenador fap','coordenador'),
     fap:        col('número fap','numero fap','nº fap','fap'),
+    codParceiro:col('cód. parceiro','cod. parceiro','codigo parceiro','código do parceiro','cod parceiro'),
     status:     col('status'),
     termometro: col('termômetro','termometro'),
     nomeParceiro:col('nome do parceiro'),
@@ -2381,17 +2395,14 @@ function analyzeCSATRisk(survey, proj, pSurveys) {
   let srTotal = cerebroScore + motorScore;
   return { cerebroScore, motorScore, srTotal, clusters, motorTags };
 }
-
-// ─── TABELA COM ORDENAÇÃO E FILTRO REGIONAL ───
+// ─── TABELA COM FILTRAGEM SIMULTÂNEA E CRONOLOGIA ATUALIZADA ───
 function renderCSATTable() {
   const nota = document.getElementById('csat-filt-nota').value;
   const tipo = document.getElementById('csat-filt-tipo').value;
   const un = document.getElementById('csat-filt-unidade').value;
-  // Pega o valor do filtro regional de forma segura
-  const regEl = document.getElementById('csat-filt-regional');
-  const reg = regEl ? regEl.value : '';
+  const grpFilt = document.getElementById('csat-filt-grp') ? document.getElementById('csat-filt-grp').value : '';
+  const mesanoFilt = document.getElementById('csat-filt-mesano') ? document.getElementById('csat-filt-mesano').value : '';
   
-  // 1. Processar os Scores e Contextos ANTES de filtrar e ordenar
   let processedSurveys = surveys.map(s => {
     const p = projects.find(x => x.fap === s.fap);
     const pSurveys = surveys.filter(x => x.fap === s.fap);
@@ -2399,31 +2410,38 @@ function renderCSATTable() {
     return { s, p, pSurveys, sr };
   });
 
-  // 2. Aplicar os Filtros
+  // Filtragem combinada em tempo real
   let filtered = processedSurveys.filter(item => {
     if(nota && item.s.csat !== nota) return false;
     if(tipo && !item.s.tipoPesq.includes(tipo)) return false;
     if(un && item.s.unidade !== un) return false;
-    if(reg && item.s.regional !== reg) return false;
+    
+    // 1. Filtragem simultânea por Gerente Regional (GRP) via Dicionário
+    if (grpFilt) {
+      const unidadeNorm = (item.s.unidade || '').trim().replace(/\s+/g, ' ');
+      const taskGRP = mapUnidadeGRP[unidadeNorm] || 'Sem regional';
+      if (!taskGRP.includes(grpFilt)) return false;
+    }
+    
+    // 2. Filtragem simultânea por Mês/Ano (mm/aaaa)
+    if (mesanoFilt) {
+      if (getMesAno(item.s.dataPesq) !== mesanoFilt) return false;
+    }
+    
     return true;
   });
 
-  // 3. Ordenação: Os piores casos (Maior Score $SR$) ficam no topo
   filtered.sort((a,b) => {
-    // Ordena pelo Score total descrescente
-    if (b.sr.srTotal !== a.sr.srTotal) {
-      return b.sr.srTotal - a.sr.srTotal; 
-    }
-    // Desempate: Se o score for igual, prioriza as notas CSAT piores
+    if (b.sr.srTotal !== a.sr.srTotal) return b.sr.srTotal - a.sr.srTotal; 
     const oa = CSAT_ORDER.indexOf(a.s.csat), ob = CSAT_ORDER.indexOf(b.s.csat);
     return ob - oa; 
   });
 
   document.getElementById('csat-table-tag').textContent = filtered.length + ' pesquisas';
   
-  // 4. Renderizar a Tabela
   document.getElementById('csat-tbody').innerHTML = filtered.map(item => {
     const s = item.s;
+    const p = item.p;
     const sr = item.sr;
     
     let srClass = 'sr-none';
@@ -2433,14 +2451,18 @@ function renderCSATTable() {
     
     const cerebroHtml = sr.clusters.map(c => `<span class="tag-cerebro" title="${c.desc}">${c.nome}</span>`).join('');
     const motorHtml = sr.motorTags.map(c => `<span class="tag-motor" title="${c.desc}">${c.nome}</span>`).join('');
-    
     const comentarioLimpo = s.comentario ? s.comentario.replace(/"/g, '&quot;') : '';
 
-    return `<tr style="cursor:pointer; transition: background 0.2s;" onmouseenter="this.style.background='var(--bg4)'" onmouseleave="this.style.background=''" onclick="openCSATModal('${s.fap}')" title="Clique para ver o histórico e comentários completos">
+    const notaExibicao = (p && p.csatLast) ? p.csatLast : s.csat;
+    
+    // CORREÇÃO: Resgata a data de forma dinâmica da ULTIMA pesquisa cronológica vinculada àquele projeto
+    const dataExibicao = (p && p.surveys && p.surveys.length > 0) ? p.surveys[p.surveys.length - 1].dataPesq : s.dataPesq;
+
+    return `<tr style="cursor:pointer; transition: background 0.2s;" onmouseenter="this.style.background='var(--bg4)'" onmouseleave="this.style.background=''" onclick="openCSATModal('${s.fap}')" title="Clique para ver o histórico completo">
       <td style="font-family:var(--mono);font-size:11px;font-weight:600;color:var(--text)">${s.fap||'—'}</td>
       <td style="font-size:11px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.parceiro}</td>
-      <td style="vertical-align:middle">${csatBadge(s.csat)}</td>
-      <td style="font-size:11px;color:var(--text3)">${s.dataPesq}</td>
+      <td style="vertical-align:middle" title="Nota atual do projeto">${csatBadge(notaExibicao, true)}</td>
+      <td style="font-size:11px;color:var(--text3)">${dataExibicao}</td>
       <td style="text-align:center"><span class="sr-badge ${srClass}" title="Score: ${sr.srTotal} pontos">${sr.srTotal}</span></td>
       <td style="max-width:120px; white-space:normal">${cerebroHtml || '<span style="color:var(--text3);font-size:10px">—</span>'}</td>
       <td style="max-width:120px; white-space:normal">${motorHtml || '<span style="color:var(--text3);font-size:10px">—</span>'}</td>
@@ -2448,195 +2470,9 @@ function renderCSATTable() {
     </tr>`;
   }).join('');
 }
-
-
-async function runCSATAI(){
-  const btn=document.getElementById('btn-csat-ai');
-  if(!btn)return;
-  btn.disabled=true; btn.textContent='Analisando...';
-  const ao=document.getElementById('csat-ai-output');
-
-  // ── Cache CSAT ──
-  if(_aiCache.csat){
-    ao.innerHTML=_aiCache.csat;
-    return;
-  }
-
-  ao.innerHTML='<div class="loading-bar"></div><div class="ai-output-placeholder"><div style="display:flex;align-items:center;justify-content:center;gap:10px"><div class="spinner"></div>Analisando '+surveys.length+' pesquisas...</div></div>';
-
-  const total=surveys.length;
-  const counts={};
-  CSAT_ORDER.forEach(c=>counts[c]=surveys.filter(s=>s.csat===c).length);
-  const negSurveys=surveys.filter(s=>CSAT_NEG.includes(s.csat));
-
-  // Limitar comentários: máx 15, truncados em 120 chars cada
-  const comentarios=negSurveys
-    .filter(s=>s.comentario&&s.comentario.trim().length>5)
-    .slice(0,15)
-    .map(s=>'- '+s.csat+': '+s.comentario.substring(0,120).trim());
-
-  // Cruzamento etapas × negativos (compacto)
-  const etapaRisco=ETAPAS.map(e=>{
-    const projsNeg=projects.filter(p=>(p.etapas[e]||'').toUpperCase().trim()==='NÃO');
-    const sv=surveys.filter(s=>projsNeg.find(x=>x.fap===s.fap));
-    const neg=sv.filter(s=>CSAT_NEG.includes(s.csat)).length;
-    return sv.length>=3?e+': '+neg+'/'+sv.length+' neg ('+Math.round(neg/sv.length*100)+'%)':null;
-  }).filter(Boolean);
-
-  // Top 8 projetos em alerta (CSAT neg + risco crítico)
-  const alarmes=negSurveys
-    .map(s=>{const p=projects.find(x=>x.fap===s.fap);return p?'FAP '+s.fap+' | '+p.risco+' | '+s.csat+(s.comentario?' | '+s.comentario.substring(0,80):''): null;})
-    .filter(Boolean).slice(0,8);
-
-  const csatSummary=CSAT_ORDER.map(c=>c+': '+counts[c]+' ('+Math.round((counts[c]||0)/total*100)+'%)').join(' | ');
-
-  const prompt=
-    'Especialista em CX e projetos ERP. Analise os dados CSAT abaixo e gere relatório executivo CONCISO em português.\n\n'
-    +'RESUMO: '+total+' pesquisas | '+csatSummary+'\n'
-    +'Negativas: '+negSurveys.length+' ('+Math.round(negSurveys.length/total*100)+'%)\n\n'
-    +'ETAPAS × CSAT NEGATIVO:\n'+etapaRisco.join('\n')+'\n\n'
-    +'PROJETOS EM ALERTA:\n'+alarmes.join('\n')+'\n\n'
-    +(comentarios.length?'COMENTÁRIOS (amostra):\n'+comentarios.join('\n')+'\n\n':'')
-    +'Gere relatório com as seções:\n'
-    +'1. PANORAMA DE SATISFAÇÃO\n'
-    +'2. ANÁLISE DE SENTIMENTO DOS COMENTÁRIOS\n'
-    +'3. CORRELAÇÕES ENTRE CONFORMIDADE E INSATISFAÇÃO\n'
-    +'4. PROJETOS EM RISCO DE ESCALADA\n'
-    +'5. TENDÊNCIAS E PADRÕES IDENTIFICADOS\n'
-    +'6. PLANOS DE AÇÃO\n\n'
-    +'Seja direto e objetivo. Na seção PLANOS DE AÇÃO use:\n'
-    +'AÇÃO: [título]\nPRAZO: [prazo]\nRESPONSÁVEL: [resp]\nCOMO: [descrição curta]';
-
-  try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:4000,
-        messages:[{role:'user',content:prompt}]
-      })
-    });
-    const d=await r.json();
-    if(d.error){
-      ao.innerHTML='<div class="ai-output-inner"><div class="ai-risk-item cr"><div class="ai-risk-body">Erro da API: '+d.error.message+'</div></div></div>';
-    } else {
-      renderAIOutput(d.content?.map(b=>b.text||'').join('\n')||'Sem resposta.',ao);
-      _aiCache.csat=ao.innerHTML; // salva no cache da sessão
-    }
-  }catch(e){
-    ao.innerHTML='<div class="ai-output-inner"><div class="ai-risk-item cr"><div class="ai-risk-body">Erro de conexão: '+e.message+'</div></div></div>';
-  }
-  btn.disabled=false; btn.textContent='Analisar sentimento \u2197';
-}
-
 function mdInline(t){
   // **bold** e *italic*
   return t.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>').replace(/\*([^*]+)\*/g,'<em>$1</em>');
-}
-
-function renderAIOutput(text, targetEl){
-  const el = targetEl || document.getElementById('ai-output');
-
-  // Helper: formatar inline — **bold**, *italic*, remover asteriscos soltos
-  const fmt = s => s
-    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*([^*]+)\*/g, '<em>$1</em>')
-    .replace(/\*/g, '');  // remover asteriscos remanescentes
-
-  // Detectar e renderizar tabelas markdown
-  const renderTable = rows => {
-    const header = rows[0];
-    const body = rows.slice(2); // pular linha de separador |---|
-    const ths = header.split('|').map(c=>c.trim()).filter(Boolean);
-    let t = '<div class="ai-table-wrap"><table class="ai-table"><thead><tr>'
-      + ths.map(h=>`<th>${fmt(h)}</th>`).join('') + '</tr></thead><tbody>';
-    body.forEach(row => {
-      const cells = row.split('|').map(c=>c.trim()).filter(Boolean);
-      if(cells.length === 0) return;
-      t += '<tr>' + cells.map(c=>`<td>${fmt(c)}</td>`).join('') + '</tr>';
-    });
-    return t + '</tbody></table></div>';
-  };
-
-  const lines = text.split('\n');
-  let html = '<div class="ai-output-inner">';
-  let inAction = false, actionHtml = '', actionCount = 0;
-  let tableBuffer = [], inTable = false;
-
-  const flushAction = () => {
-    if(actionHtml){
-      actionCount++;
-      html += `<div class="action-card"><div class="action-num">${String(actionCount).padStart(2,'0')}</div><div class="action-body">${actionHtml}</div></div>`;
-      actionHtml = '';
-    }
-    inAction = false;
-  };
-
-  const flushTable = () => {
-    if(tableBuffer.length >= 3) html += renderTable(tableBuffer);
-    tableBuffer = []; inTable = false;
-  };
-
-  lines.forEach(l => {
-    const t = l.trim();
-
-    // Detectar linhas de tabela markdown
-    if(t.startsWith('|') && t.endsWith('|')){
-      inTable = true;
-      tableBuffer.push(t);
-      return;
-    } else if(inTable){
-      flushTable();
-    }
-
-    if(!t) return;
-
-    // Blocos de ação
-    if(/^AÇÃO:/i.test(t)){
-      flushAction();
-      inAction = true;
-      actionHtml = `<div class="action-title">${fmt(t.replace(/^AÇÃO:\s*/i,''))}</div>`;
-      return;
-    }
-    if(inAction && /^PRAZO:/i.test(t)){
-      const val = fmt(t.replace(/^PRAZO:\s*/i,''));
-      const urgColor = /imediato/i.test(val)?'var(--accent)':/15/i.test(val)?'var(--accent2)':/30/i.test(val)?'var(--warn)':'var(--ok)';
-      actionHtml += `<div class="action-meta"><span class="action-tag" style="color:${urgColor};border-color:${urgColor}">⏱ ${val}</span>`;
-      return;
-    }
-    if(inAction && /^RESPONSÁVEL:/i.test(t)){
-      actionHtml += `<span class="action-tag" style="color:var(--info);border-color:var(--info)">👤 ${fmt(t.replace(/^RESPONSÁVEL:\s*/i,''))}</span></div>`;
-      return;
-    }
-    if(inAction && /^COMO:/i.test(t)){
-      actionHtml += `<div class="action-como">${fmt(t.replace(/^COMO:\s*/i,''))}</div>`;
-      return;
-    }
-    if(inAction && (/^\d+\.\s+[A-ZÁÉÍÓÚÂÃÊÔ]/.test(t) || /^#+\s/.test(t))) flushAction();
-
-    // Cabeçalhos de seção
-    if(/^\d+\.\s+[A-ZÁÉÍÓÚÂÃÊÔ]/.test(t) || /^#+\s/.test(t)){
-      const title = fmt(t.replace(/^#{1,3}\s*/,'').replace(/^\d+\.\s*/,''));
-      const isAction = /PLANOS DE AÇÃO|PLANO DE AÇÃO/i.test(title);
-      if(isAction) actionCount = 0;
-      html += `<div class="ai-section-h ${isAction?'action-section-h':''}">${title}</div>`;
-    }
-    // Bullets
-    else if(/^[-•*]\s/.test(t)){
-      const c = fmt(t.replace(/^[-•*]\s*/,''));
-      const cr = /CRÍT|CRITICO|crítico/i.test(c), wn = /ATEN/i.test(c) && !cr;
-      html += `<div class="ai-risk-item ${cr?'cr':wn?'wn':''}"><div class="ai-risk-body">${c}</div></div>`;
-    }
-    // Parágrafo
-    else {
-      html += `<div class="ai-p">${fmt(t)}</div>`;
-    }
-  });
-
-  if(inTable) flushTable();
-  flushAction();
-  el.innerHTML = html + '</div>';
 }
 
 function buildProjectsTable(){filteredProjects=[...projects];renderProjectsTable();}
@@ -2971,7 +2807,6 @@ function buildUnits(){
   document.getElementById('units-count-tag').textContent=units.length+' unidades';
   document.getElementById('units-tbody').innerHTML=units.map(u=>{
     const pc=Math.round(u.criticos/u.total*100),pw=Math.round(u.atencao/u.total*100),pg=Math.round(u.baixo/u.total*100);
-    const safeId=u.name.replace(/[^a-zA-Z0-9]/g,'_');
     return '<tr>'
       +'<td style="font-weight:500;color:var(--text)">'+u.name+'</td>'
       +'<td style="text-align:center;font-family:var(--mono)">'+u.total+'</td>'
@@ -2985,7 +2820,6 @@ function buildUnits(){
       +'<div class="stacked-seg bar-fill w" style="width:'+pw+'%"></div>'
       +'<div class="stacked-seg bar-fill g" style="width:'+pg+'%"></div>'
       +'</div></td>'
-      +'<td style="text-align:center"><button id="btn-unit-'+safeId+'" class="btn btn-accent" style="font-size:9px;padding:4px 10px;white-space:nowrap" onclick="runAIUnit(\''+u.name.replace(/'/g,"\\'")+'\',\'btn-unit-'+safeId+'\')">IA \u2197</button></td>'
       +'</tr>';
   }).join('');
 }
@@ -3011,340 +2845,6 @@ function buildCoordinators(){
       +'</div></td></tr>';
   }).join('');
 }
-
-async function runAI(){
-  const b1=document.getElementById('btn-ai'),b2=document.getElementById('btn-ai2');
-  [b1,b2].forEach(b=>{if(b){b.disabled=true;b.textContent='Analisando...';}});
-  showView('ai');
-  const ao=document.getElementById('ai-output');
-  ao.innerHTML='<div class="loading-bar"></div><div class="ai-output-placeholder"><div style="display:flex;align-items:center;justify-content:center;gap:10px"><div class="spinner"></div>Preparando análise integrada...</div></div>';
-
-  const s=calcStats();
-  const et=calcEtapaStats();
-  const units=calcByGroup('unidade').slice(0,10);
-  const coords=calcByGroup('coordenador').filter(c=>c.criticos>0).slice(0,10);
-
-  // ── Dados quantitativos ──
-  const etNao=ETAPAS_DOC.filter(e=>et[e]&&et[e].nao>0).map(e=>{
-    const v=et[e],tot=v.sim+v.nao,pct=tot?Math.round(v.nao/tot*100):0;
-    return e+': '+v.nao+' NÃO ('+pct+'% dos avaliados)';
-  });
-
-  // ── Projetos críticos com dados textuais ──
-  const criticos=projects.filter(p=>p.risco==='Crítico')
-    .sort((a,b)=>(b.score||0)-(a.score||0)).slice(0,15);
-
-  const projetosCrit=criticos.map(p=>{
-    // Termômetro — última descrição
-    const termoAtual=termoHistory.filter(t=>t.fap===p.fap&&t.versao.includes('ATUAL'))[0];
-    const termoDesc=termoAtual?.descricao||'';
-    // CSAT — última pesquisa com comentário
-    const ultimaSurvey=(p.surveys||[]).slice(-1)[0];
-    const csatNota=ultimaSurvey?.csat||'';
-    const csatComent=ultimaSurvey?.comentario||'';
-    // FCA — fatos e causas em aberto
-    const fcasAbertos=fcaData.filter(f=>f.fap===p.fap&&(f.status==='EM ANDAMENTO'||f.status.includes('INICIADO')));
-    const fcaTextos=fcasAbertos.slice(0,2).map(f=>'Fato: '+f.fato+(f.causa?' | Causa: '+f.causa:'')).join(' / ');
-    return 'FAP '+p.fap+' | '+p.nomeParceiro+' | Score:'+p.score
-      +'\n  GP(termômetro): '+p.termometro+(termoDesc?' — "'+termoDesc.slice(0,120)+'"':'')
-      +(csatNota?'\n  Cliente(CSAT '+csatNota+'): '+(csatComent?'"'+csatComent.slice(0,120)+'"':'sem comentário'):'')
-      +(fcaTextos?'\n  FCA em aberto: '+fcaTextos:'');
-  }).join('\n\n');
-
-  // ── Gaps GP × Cliente ──
-  const normS=s2=>(s2||'').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-  const gaps=projects.filter(p=>{
-    const termAtual=termoHistory.find(t=>t.fap===p.fap&&t.versao.includes('ATUAL'));
-    const gpCrit=termAtual?normS(termAtual.status).includes('CRIT'):normS(p.termometro).includes('CRIT');
-    const csatNeg=p.csatLast&&CSAT_NEG.includes(p.csatLast);
-    return (gpCrit&&!csatNeg)||(csatNeg&&!gpCrit);
-  }).slice(0,8).map(p=>{
-    const termAtual=termoHistory.find(t=>t.fap===p.fap&&t.versao.includes('ATUAL'));
-    const gpView=termAtual?termAtual.status:p.termometro;
-    return 'FAP '+p.fap+' | '+p.nomeParceiro+' | GP: '+gpView+' | Cliente CSAT: '+(p.csatLast||'sem pesquisa');
-  });
-
-  // ── Análise de causas recorrentes nos FCAs ──
-  const fcaCausas=fcaData.filter(f=>f.causa).map(f=>f.origemCausa||f.causa).filter(Boolean);
-  const causaFreq={};
-  fcaCausas.forEach(c=>{const k=c.trim().slice(0,40);causaFreq[k]=(causaFreq[k]||0)+1;});
-  const topCausas=Object.entries(causaFreq).sort((a,b)=>b[1]-a[1]).slice(0,8)
-    .map(([k,v])=>v+'x '+k).join('\n');
-
-  // ── CSAT — sentimento agregado ──
-  const NEG=new Set(CSAT_NEG);
-  const POS=new Set(CSAT_POS);
-  const csatComents=surveys.filter(s=>NEG.has(s.csat)&&s.comentario).slice(0,10)
-    .map(s=>'['+s.csat+'] '+s.comentario.slice(0,100)).join('\n');
-
-  // ── Termômetro — descrições críticas recentes ──
-  const termoDescs=termoHistory
-    .filter(t=>normS(t.status).includes('CRIT')&&t.descricao&&t.descricao!=='Abertura do Projeto')
-    .sort((a,b)=>{
-      const pd=s=>{if(!s)return 0;const p=s.split(/[/\s]/);return p.length>=3?new Date(+p[2],+p[1]-1,+p[0]).getTime():0;};
-      return pd(b.dataAlteracao)-pd(a.dataAlteracao);
-    }).slice(0,10).map(t=>'FAP '+t.fap+': "'+t.descricao.slice(0,120)+'"').join('\n');
-
-  // ── Diário de Bordo — registros relevantes dos projetos críticos (últimos 60 dias) ──
-  const _dbCutoff=new Date();_dbCutoff.setDate(_dbCutoff.getDate()-60);
-  const _dbParseD=s=>{if(!s)return null;const pts=s.split(/[\/\s]/);return pts.length>=3?new Date(+pts[2],+pts[1]-1,+pts[0]):null;};
-  const tiposRelevantes=new Set(['PONTOS DE ATENÇÃO','RISCO','REGISTRO DE ALTERAÇÃO']);
-  const diarioRelevante=diarioBordo
-    .filter(d=>{const dt=_dbParseD(d.data);return criticos.some(p=>p.fap===d.fap)&&tiposRelevantes.has(d.tipo)&&d.descricao&&dt&&dt>=_dbCutoff;})
-    .sort((a,b)=>(_dbParseD(b.data)||0)-(_dbParseD(a.data)||0))
-    .slice(0,10)
-    .map(d=>'FAP '+d.fap+' ['+d.tipo+']: "'+d.descricao.slice(0,120)+'"')
-    .join('\n');
-
-  const prompt=`Você é um especialista sênior em gestão de projetos ERP com profundo conhecimento em:
-- PMBOK 7ª edição (princípios de gestão de riscos e stakeholders)
-- PRINCE2 (gestão de riscos e controle de projetos)
-- ISO 31000 (framework de gestão de riscos)
-- Standish Group CHAOS Report (causas de falha em projetos de TI/ERP)
-- Gestão de churn e satisfação de clientes B2B
-
-Analise os dados abaixo e gere um relatório executivo em português. Use esses frameworks como base para interpretar os padrões e recomendar ações.
-
-═══ DADOS QUANTITATIVOS ═══
-PORTFÓLIO: ${s.total} projetos — Crítico: ${s.criticos} (${Math.round(s.criticos/s.total*100)}%) — Atenção: ${s.atencao} — Baixo: ${s.baixo} — Suspensos: ${s.suspensos}
-
-NÃO CONFORMIDADES DE DOCUMENTAÇÃO:
-${etNao.join('\n')}
-
-TOP UNIDADES (críticos/total):
-${units.map(u=>u.name+': '+u.criticos+' críticos ('+Math.round(u.criticos/u.total*100)+'%) / '+u.total).join('\n')}
-
-TOP COORDENADORES (críticos):
-${coords.map(c=>c.name+': '+c.criticos+'/'+c.total+' ('+Math.round(c.criticos/c.total*100)+'%)').join('\n')}
-
-═══ ANÁLISE TEXTUAL — VOZ DO GP (TERMÔMETRO CRÍTICO) ═══
-${termoDescs||'Sem descrições disponíveis'}
-
-═══ ANÁLISE TEXTUAL — VOZ DO CLIENTE (CSAT NEGATIVO) ═══
-${csatComents||'Sem comentários disponíveis'}
-
-═══ CAUSAS RECORRENTES NOS FCAs ═══
-\${topCausas||'Sem dados de FCA'}
-
-═══ DIÁRIO DE BORDO — PONTOS DE ATENÇÃO E RISCOS REGISTRADOS ═══
-\${diarioRelevante||'Sem registros relevantes no diário'}
-
-═══ GAPS GP × CLIENTE (divergências de percepção) ═══
-${gaps.length>0?gaps.join('\n'):'Nenhum gap identificado'}
-
-═══ PROJETOS CRÍTICOS — DADOS INTEGRADOS ═══
-${projetosCrit||'Sem projetos críticos'}
-
-═══ ESTRUTURA DO RELATÓRIO ═══
-Gere um relatório executivo com EXATAMENTE estas seções:
-
-1. DIAGNÓSTICO EXECUTIVO
-Síntese da situação atual do portfólio com números e contexto. Cite benchmarks do Standish Group ou ISO 31000 quando relevante.
-
-2. ANÁLISE DE SENTIMENTO — VOZ DO GP
-Tendências identificadas nas descrições do termômetro. Quais padrões de problemas aparecem? Quais linguagens de risco o GP usa?
-
-3. ANÁLISE DE SENTIMENTO — VOZ DO CLIENTE
-Tendências nos comentários CSAT negativos. O que o cliente mais reclama? Quais temas recorrentes?
-
-4. GAPS GP × CLIENTE
-Divergências críticas entre a percepção do GP e a percepção do cliente. Destaque onde o GP subestima a insatisfação e onde o cliente está mais satisfeito do que o GP percebe.
-
-5. PADRÕES DE FALHA
-Com base nos FCAs e termômetros, quais são as causas-raiz mais frequentes? Conecte com frameworks (ex: PMBOK risk categories, CHAOS Report failure factors).
-
-6. PROJETOS EM SITUAÇÃO MAIS CRÍTICA
-Liste os projetos que concentram múltiplos fatores de risco e explique por que merecem atenção imediata.
-
-7. RECOMENDAÇÕES ESTRATÉGICAS
-3 a 5 recomendações baseadas em boas práticas de gestão de projetos ERP.
-
-8. PLANOS DE AÇÃO (formato 5W2H)
-Liste 5 a 7 ações concretas e priorizadas. Para cada ação use EXATAMENTE:
-AÇÃO: [título]
-PRAZO: [prazo]
-RESPONSÁVEL: [responsável]
-COMO: [passo a passo resumido]`;
-
-  try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:4000,messages:[{role:'user',content:prompt}]})});
-    const d=await r.json();
-    renderAIOutput(d.content?.map(b=>b.text||'').join('\n')||'Erro ao obter resposta.');
-    _aiCache.geral=ao.innerHTML; // salva no cache da sessão
-  }catch(e){
-    ao.innerHTML='<div class="ai-output-inner"><div class="ai-risk-item cr"><div class="ai-risk-body">Erro de conexão. Tente novamente.</div></div></div>';
-  }
-  [b1,b2].forEach(b=>{if(b){b.disabled=false;b.textContent=b.id==='btn-ai'?'Analisar com IA \u2197':'Gerar análise \u2197';}});
-}
-
-
-async function runAIUnit(unitName,btnId){
-  const btn=document.getElementById(btnId);
-
-  // ── Cache por unidade ──
-  const _unitCacheKey=unitName;
-  if(_aiCache.unit[_unitCacheKey]){
-    const panel=document.getElementById('unit-ai-panel');
-    const titleEl=document.getElementById('unit-ai-title');
-    const outEl=document.getElementById('unit-ai-output');
-    panel.style.display='block';
-    titleEl.textContent='Análise IA — '+unitName;
-    outEl.innerHTML=_aiCache.unit[_unitCacheKey];
-    panel.scrollIntoView({behavior:'smooth',block:'nearest'});
-    return;
-  }
-
-  if(btn){btn.disabled=true;btn.textContent='...';}
-  const panel=document.getElementById('unit-ai-panel');
-  const titleEl=document.getElementById('unit-ai-title');
-  const outEl=document.getElementById('unit-ai-output');
-  panel.style.display='block';
-  titleEl.textContent='Análise IA — '+unitName;
-  outEl.innerHTML='<div style="padding:16px 20px"><div class="loading-bar"></div><div style="display:flex;align-items:center;gap:10px;padding:12px 0;font-size:12px;color:var(--text3)"><div class="spinner"></div>Preparando análise integrada de '+unitName+'...</div></div>';
-  panel.scrollIntoView({behavior:'smooth',block:'nearest'});
-
-  const unitProjects=projects.filter(p=>p.unidade===unitName);
-  if(!unitProjects.length){
-    outEl.innerHTML='<div class="ai-output-inner"><div class="ai-p">Nenhum projeto encontrado.</div></div>';
-    if(btn){btn.disabled=false;btn.textContent='IA \u2197';}
-    return;
-  }
-
-  // ── Dados quantitativos ──
-  const s={
-    total:unitProjects.length,
-    criticos:unitProjects.filter(p=>p.risco==='Crítico').length,
-    atencao:unitProjects.filter(p=>p.risco==='Atenção').length,
-    baixo:unitProjects.filter(p=>p.risco==='Baixo').length,
-    suspensos:unitProjects.filter(p=>p.status==='SUSPENSO').length
-  };
-  const etU={};
-  ETAPAS_DOC.forEach(e=>{etU[e]={sim:0,nao:0};});
-  unitProjects.forEach(p=>{ETAPAS_DOC.forEach(e=>{const v=(p.etapas[e]||'').toUpperCase().trim();if(v==='SIM')etU[e].sim++;else if(v==='NÃO'||v==='NAO')etU[e].nao++;});});
-  const etNao=ETAPAS_DOC.filter(e=>etU[e]&&etU[e].nao>0).map(e=>{const tot=etU[e].sim+etU[e].nao,pct=tot?Math.round(etU[e].nao/tot*100):0;return e+': '+etU[e].nao+' NÃO ('+pct+'% dos avaliados)';});
-  const coords={};
-  unitProjects.forEach(p=>{if(!coords[p.coordenador])coords[p.coordenador]={total:0,criticos:0,atencao:0};coords[p.coordenador].total++;if(p.risco==='Crítico')coords[p.coordenador].criticos++;else if(p.risco==='Atenção')coords[p.coordenador].atencao++;});
-
-  // ── Projetos críticos com dados textuais ──
-  const normS=s2=>(s2||'').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-  const criticos=unitProjects.filter(p=>p.risco==='Crítico').sort((a,b)=>(b.score||0)-(a.score||0)).slice(0,10);
-  const projetosCrit=criticos.map(p=>{
-    const termoAtual=termoHistory.filter(t=>t.fap===p.fap&&t.versao.includes('ATUAL'))[0];
-    const termoDesc=termoAtual?.descricao||'';
-    const ultimaSurvey=(p.surveys||[]).slice(-1)[0];
-    const csatNota=ultimaSurvey?.csat||'';
-    const csatComent=ultimaSurvey?.comentario||'';
-    const fcasAbertos=fcaData.filter(f=>f.fap===p.fap&&(f.status==='EM ANDAMENTO'||f.status.includes('INICIADO')));
-    const fcaTextos=fcasAbertos.slice(0,2).map(f=>'Fato: '+f.fato+(f.causa?' | Causa: '+f.causa:'')).join(' / ');
-    return 'FAP '+p.fap+' | '+p.nomeParceiro+' | Score:'+p.score
-      +'\n  GP(termômetro '+p.termometro+'): '+(termoDesc?'"'+termoDesc.slice(0,120)+'"':'sem descrição')
-      +(csatNota?'\n  Cliente(CSAT '+csatNota+'): '+(csatComent?'"'+csatComent.slice(0,120)+'"':'sem comentário'):'')
-      +(fcaTextos?'\n  FCA em aberto: '+fcaTextos:'');
-  }).join('\n\n');
-
-  // ── Gaps GP × Cliente na unidade ──
-  const gaps=unitProjects.filter(p=>{
-    const termAtual=termoHistory.find(t=>t.fap===p.fap&&t.versao.includes('ATUAL'));
-    const gpCrit=termAtual?normS(termAtual.status).includes('CRIT'):normS(p.termometro).includes('CRIT');
-    const csatNeg=p.csatLast&&CSAT_NEG.includes(p.csatLast);
-    return (gpCrit&&!csatNeg)||(csatNeg&&!gpCrit);
-  }).slice(0,6).map(p=>{
-    const termAtual=termoHistory.find(t=>t.fap===p.fap&&t.versao.includes('ATUAL'));
-    return 'FAP '+p.fap+' | '+p.nomeParceiro+' | GP: '+(termAtual?termAtual.status:p.termometro)+' | Cliente CSAT: '+(p.csatLast||'sem pesquisa');
-  });
-
-  // ── Causas recorrentes FCA da unidade ──
-  const fcaUnit=fcaData.filter(f=>unitProjects.some(p=>p.fap===f.fap));
-  const causaFreq={};
-  fcaUnit.filter(f=>f.origemCausa||f.causa).forEach(f=>{const k=(f.origemCausa||f.causa).trim().slice(0,40);causaFreq[k]=(causaFreq[k]||0)+1;});
-  const topCausas=Object.entries(causaFreq).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([k,v])=>v+'x '+k).join('\n');
-
-  // ── Diário de Bordo da unidade — registros relevantes (últimos 60 dias) ──
-  const _udbCutoff=new Date();_udbCutoff.setDate(_udbCutoff.getDate()-60);
-  const _udbParseD=s=>{if(!s)return null;const pts=s.split(/[/\s]/);return pts.length>=3?new Date(+pts[2],+pts[1]-1,+pts[0]):null;};
-  const tiposRelUnit=new Set(['PONTOS DE ATENÇÃO','RISCO','REGISTRO DE ALTERAÇÃO']);
-  const diarioUnit=diarioBordo
-    .filter(d=>{const dt=_udbParseD(d.data);return unitProjects.some(p=>p.fap===d.fap)&&tiposRelUnit.has(d.tipo)&&d.descricao&&dt&&dt>=_udbCutoff;})
-    .sort((a,b)=>(_udbParseD(b.data)||0)-(_udbParseD(a.data)||0))
-    .slice(0,8)
-    .map(d=>'FAP '+d.fap+' ['+d.tipo+']: "'+d.descricao.slice(0,120)+'"')
-    .join('\n');
-
-  // ── Comentários CSAT negativos da unidade ──
-  const csatComents=unitProjects.flatMap(p=>(p.surveys||[]).filter(s=>CSAT_NEG.includes(s.csat)&&s.comentario).map(s=>'['+s.csat+'] '+s.comentario.slice(0,100))).slice(0,8).join('\n');
-
-  // ── Descrições termômetro crítico da unidade ──
-  const termoDescs=termoHistory.filter(t=>unitProjects.some(p=>p.fap===t.fap)&&normS(t.status).includes('CRIT')&&t.descricao&&t.descricao!=='Abertura do Projeto')
-    .sort((a,b)=>{const pd=s=>{if(!s)return 0;const p=s.split(/[/\s]/);return p.length>=3?new Date(+p[2],+p[1]-1,+p[0]).getTime():0;};return pd(b.dataAlteracao)-pd(a.dataAlteracao);})
-    .slice(0,8).map(t=>'FAP '+t.fap+': "'+t.descricao.slice(0,120)+'"').join('\n');
-
-  const prompt=`Você é um especialista sênior em gestão de projetos ERP com profundo conhecimento em PMBOK 7ª edição, PRINCE2, ISO 31000, Standish Group CHAOS Report e gestão de churn B2B.
-
-Analise os dados da unidade "${unitName}" e gere um relatório executivo focado em português.
-
-═══ DADOS QUANTITATIVOS ═══
-Total: ${s.total} projetos — Crítico: ${s.criticos} (${Math.round(s.criticos/s.total*100)}%) — Atenção: ${s.atencao} — Baixo: ${s.baixo} — Suspensos: ${s.suspensos}
-
-NÃO CONFORMIDADES DE DOCUMENTAÇÃO:
-${etNao.length?etNao.join('\n'):'Nenhuma'}
-
-COORDENADORES:
-${Object.entries(coords).map(([c,v])=>c+': '+v.criticos+' críticos, '+v.atencao+' atenção / '+v.total).join('\n')}
-
-═══ VOZ DO GP — TERMÔMETRO CRÍTICO ═══
-${termoDescs||'Sem descrições disponíveis'}
-
-═══ VOZ DO CLIENTE — CSAT NEGATIVO ═══
-${csatComents||'Sem comentários disponíveis'}
-
-═══ CAUSAS RECORRENTES NOS FCAs ═══\n${topCausas||'Sem dados de FCA'}\n\n═══ DIÁRIO DE BORDO — PONTOS DE ATENÇÃO E RISCOS ═══\n${diarioUnit||'Sem registros relevantes'}\n\n═══ GAPS GPCLIENTE ═══
-${gaps.length>0?gaps.join('\n'):'Nenhum gap identificado'}
-
-═══ PROJETOS CRÍTICOS — DADOS INTEGRADOS ═══
-${projetosCrit||'Nenhum projeto crítico'}
-
-═══ ESTRUTURA DO RELATÓRIO ═══
-Gere um relatório com EXATAMENTE estas seções:
-
-1. DIAGNÓSTICO DA UNIDADE
-Situação atual com números e contexto. Use benchmarks de referência quando relevante.
-
-2. ANÁLISE DE SENTIMENTO — VOZ DO GP
-Tendências nas descrições do termômetro desta unidade. Padrões e linguagem de risco usada pelos GPs.
-
-3. ANÁLISE DE SENTIMENTO — VOZ DO CLIENTE
-Tendências nos comentários CSAT negativos. O que os clientes desta unidade mais reclamam?
-
-4. GAPS GP × CLIENTE
-Divergências entre percepção interna (GP) e externa (cliente). Destaque pontos cegos.
-
-5. PADRÕES DE FALHA
-Causas-raiz mais frequentes conectadas a frameworks de boas práticas.
-
-6. COORDENADORES EM ATENÇÃO
-Quais coordenadores concentram mais risco e por quê.
-
-7. RECOMENDAÇÕES ESTRATÉGICAS
-3 a 5 recomendações específicas para esta unidade.
-
-8. PLANOS DE AÇÃO (formato 5W2H)
-5 ações priorizadas. Para cada uma use EXATAMENTE:
-AÇÃO: [título]
-PRAZO: [prazo]
-RESPONSÁVEL: [responsável]
-COMO: [passo a passo resumido]`;
-
-  try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:4000,messages:[{role:'user',content:prompt}]})});
-    const d=await r.json();
-    renderAIOutput(d.content?.map(b=>b.text||'').join('\n')||'Erro.',outEl);
-    _aiCache.unit[_unitCacheKey]=outEl.innerHTML; // salva no cache da sessão
-  }catch(e){
-    outEl.innerHTML='<div class="ai-output-inner"><div class="ai-risk-item cr"><div class="ai-risk-body">Erro de conexão.</div></div></div>';
-  }
-  if(btn){btn.disabled=false;btn.textContent='IA \u2197';}
-}
-
 
 function buildVisibilidade(){
   if(!projects.length)return;
@@ -3374,12 +2874,24 @@ function buildVisibilidade(){
       <div style="font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:6px">\u26a0 Alerta de visibilidade</div>
       <div style="font-size:13px;color:var(--text);line-height:1.7"><strong>${qq.AB.length} projetos</strong> (${pctCego}% dos cr\u00edticos) possuem <strong>risco cr\u00edtico calculado</strong> mas o GP n\u00e3o declarou term\u00f4metro cr\u00edtico.</div></div>`
     :'<div style="background:var(--ok-bg);border:1px solid var(--ok-border);border-radius:3px;padding:12px 16px;font-size:13px;color:var(--ok)">\u2713 Nenhuma diverg\u00eancia cr\u00edtica identificada.</div>';
-  const qCard=(title,list,color,desc)=>`<div class="panel"><div class="panel-header" style="border-left:3px solid ${color};padding-left:13px"><span class="panel-title" style="color:${color}">${title}</span><span style="font-family:var(--mono);font-size:11px;color:var(--text3)">${list.length} projetos</span></div><div class="panel-body" style="padding:10px 14px"><div style="font-size:11px;color:var(--text3);margin-bottom:10px;line-height:1.6">${desc}</div>${list.slice(0,5).map(p=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);font-size:11px"><span style="font-family:var(--mono);font-weight:600;color:var(--text);flex-shrink:0;margin-right:8px">${p.fap}</span><span style="color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">${p.nomeParceiro}</span><span style="color:var(--text3);margin-left:8px;flex-shrink:0">${p.coordenador.split(' ')[0]}</span></div>`).join('')}${list.length>5?`<div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:8px">+ ${list.length-5} projetos</div>`:''}</div></div>`;
+ const qCard=(t,l,c,d)=>{
+    const top5 = l.slice(0,5).map(p=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:11px"><span style="font-family:var(--mono);font-weight:600;color:var(--text);margin-right:8px">${p.fap}</span><span style="color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">${p.nomeParceiro}</span><span style="color:var(--text3);margin-left:8px">${p.coordenador.split(' ')[0]}</span></div>`).join('');
+    const rest = l.slice(5).map(p=>`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:11px"><span style="font-family:var(--mono);font-weight:600;color:var(--text);margin-right:8px">${p.fap}</span><span style="color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">${p.nomeParceiro}</span><span style="color:var(--text3);margin-left:8px">${p.coordenador.split(' ')[0]}</span></div>`).join('');
+    
+    let expHtml = '';
+    if(l.length > 5){
+      const id = 'exp_' + Math.random().toString(36).substr(2, 9);
+      expHtml = `<div id="${id}" style="display:none; margin-top:5px;">${rest}</div>
+                 <button style="width:100%; margin-top:8px; padding:6px; background:var(--bg4); border:1px dashed var(--border2); border-radius:3px; color:var(--text3); font-family:var(--mono); font-size:9px; cursor:pointer; transition:all 0.2s" onmouseover="this.style.color='var(--accent)'; this.style.borderColor='var(--accent)'" onmouseout="this.style.color='var(--text3)'; this.style.borderColor='var(--border2)'" onclick="document.getElementById('${id}').style.display='block'; this.style.display='none'">+ VER TODOS OS ${l.length} PROJETOS ▾</button>`;
+    }
+    return `<div class="panel"><div class="panel-header" style="border-left:3px solid ${c};padding-left:13px"><span class="panel-title" style="color:${c}">${t}</span><span style="font-family:var(--mono);font-size:11px;color:var(--text3)">${l.length} projetos</span></div><div class="panel-body" style="padding:10px 14px"><div style="font-size:11px;color:var(--text3);margin-bottom:10px;line-height:1.6">${d}</div>${top5}${expHtml}</div></div>`;
+  };
+  
   document.getElementById('vis-quadrants').innerHTML=
-    qCard('Risco Cr\u00edtico + Term\u00f4metro Cr\u00edtico',qq.AA,'var(--accent)','Alinhamento negativo: GP e sistema concordam. Situa\u00e7\u00e3o grave e reconhecida.')
-   +qCard('Risco Cr\u00edtico + Term\u00f4metro N\u00e3o Cr\u00edtico \u26a0',qq.AB,'var(--accent)','Ponto cego: sistema detecta risco cr\u00edtico mas GP n\u00e3o declarou criticidade.')
-   +qCard('Risco N\u00e3o Cr\u00edtico + Term\u00f4metro Cr\u00edtico',qq.BA,'var(--warn)','GP pessimista: GP declarou criticidade mas risco calculado n\u00e3o \u00e9 cr\u00edtico.')
-   +qCard('Risco N\u00e3o Cr\u00edtico + Term\u00f4metro N\u00e3o Cr\u00edtico',qq.BB,'var(--ok)','Alinhamento positivo: GP e sistema concordam que o projeto n\u00e3o est\u00e1 em situa\u00e7\u00e3o cr\u00edtica.');
+    qCard('Risco Crítico + Termômetro Crítico',qq.AA,'var(--accent)','Alinhamento negativo: GP e sistema concordam.')
+   +qCard('Risco Crítico + Termômetro Não Crítico ⚠',qq.AB,'var(--accent)','Ponto cego: sistema detecta risco crítico mas GP não declarou criticidade.')
+   +qCard('Risco Não Crítico + Termômetro Crítico',qq.BA,'var(--warn)','GP pessimista: GP declarou criticidade mas risco calculado não é crítico.')
+   +qCard('Risco Não Crítico + Termômetro Não Crítico',qq.BB,'var(--ok)','Alinhamento positivo: GP e sistema concordam que o projeto não está em situação crítica.');
   const divergentes=[...qq.AB.map(p=>({...p,_div:'Ponto cego',_divColor:'var(--accent)'})),...qq.BA.map(p=>({...p,_div:'GP pessimista',_divColor:'var(--warn)'}))].sort((a,b)=>b.negCount-a.negCount);
   document.getElementById('vis-tbody').innerHTML=divergentes.map(p=>{
     const rb=p.risco==='Cr\u00edtico'?'badge-crit':p.risco==='Aten\u00e7\u00e3o'?'badge-warn':'badge-ok';
@@ -3481,18 +2993,34 @@ function populateColFilters() {
   if(sintomasTd && document.getElementById('th-sintomas')) sintomasTd.style.display = document.getElementById('th-sintomas').style.display;
 }
 
+// ─── MOTOR DE BUSCA (ATUALIZADO COM GRP E MÚLTIPLAS UNIDADES) ───
 function filterProjects(){
   const search=document.getElementById('search-proj').value.toLowerCase();
   const st=document.getElementById('filt-status').value;
   const tm=document.getElementById('filt-termo').value;
   const ri=document.getElementById('filt-risco').value;
-  const un=document.getElementById('filt-unidade').value;
   const co=document.getElementById('filt-coord').value;
   const md=document.getElementById('filt-modelo').value;
   const ncSel=Array.from(document.querySelectorAll('#nc-dropdown input:checked')).map(i=>i.value);
   const csatFilt=document.getElementById('filt-csat')?document.getElementById('filt-csat').value:'';
+  
+  // NOVOS FILTROS UNIFICADOS
+  const grpFilt = document.getElementById('filt-grp') ? document.getElementById('filt-grp').value : '';
+  const unSel = Array.from(document.querySelectorAll('#proj-unidade-dropdown input:checked')).map(i=>i.value);
+
   filteredProjects=projects.filter(p=>{
     if(search&&!p.nomeParceiro.toLowerCase().includes(search)&&!p.fap.includes(search)&&!p.coordenador.toLowerCase().includes(search))return false;
+    
+    // Validação GRP
+    if(grpFilt) {
+       const projReg = (p.unidade || '').toUpperCase().trim().replace(/\s+/g, ' ');
+       const projectGRP = mapUnidadeGRP[projReg] || 'Sem regional';
+       if (!projectGRP.includes(grpFilt)) return false;
+    }
+    
+    // Validação Multi-Unidade
+    if (unSel.length > 0 && !unSel.includes(p.unidade)) return false;
+
     var colFilts = document.querySelectorAll('#col-filter-row .col-filt');
     for(var ci=0; ci<colFilts.length; ci++) {
       var cf = colFilts[ci];
@@ -3509,7 +3037,6 @@ function filterProjects(){
     if(st&&p.status!==st)return false;
     if(tm&&!p.termometro.toUpperCase().includes(tm.toUpperCase()))return false;
     if(ri&&p.risco!==ri)return false;
-    if(un&&p.unidade!==un)return false;
     if(co&&p.coordenador!==co)return false;
     if(md&&!p.modelo.includes(md))return false;
     if(ncSel.length>0){
@@ -3533,21 +3060,77 @@ function filterProjects(){
   var hasColFilter = false;
   document.querySelectorAll('#col-filter-row .col-filt').forEach(function(f){if(f.value) hasColFilter=true;});
   const hasFilter=
-    hasColFilter||
-    document.getElementById('search-proj').value||
-    document.getElementById('filt-status').value||
-    document.getElementById('filt-termo').value||
-    document.getElementById('filt-risco').value||
-    document.getElementById('filt-unidade').value||
-    document.getElementById('filt-coord').value||
-    document.getElementById('filt-modelo').value||
-    (document.getElementById('filt-csat')&&document.getElementById('filt-csat').value)||
-    window._projSpecialFilter||
-    window._clienteFilterNome||
+    hasColFilter||search||st||tm||ri||co||md||csatFilt||grpFilt||unSel.length>0||
+    window._projSpecialFilter||window._clienteFilterNome||
     document.querySelectorAll('#nc-dropdown input:checked').length>0;
   const btnClear=document.getElementById('btn-clear-filters');
   if(btnClear) btnClear.style.display=hasFilter?'':'none';
 }
+
+function populateFilters(){
+  const us=[...new Set(projects.map(p=>p.unidade).filter(Boolean))].sort();
+  const cs=[...new Set(projects.map(p=>p.coordenador).filter(Boolean))].sort();
+  
+  const fc = document.getElementById('filt-coord');
+  const fcuDropdown = document.getElementById('conf-unidade-dropdown'); 
+  const projDropdown = document.getElementById('proj-unidade-dropdown'); // Aba Projetos
+  const fcc = document.getElementById('filt-conf-coord'); 
+  
+  if (fc) {
+    fc.innerHTML = '<option value="">Todos os coordenadores</option>';
+    cs.forEach(c=>{const o=document.createElement('option');o.value=o.text=c;fc.appendChild(o);});
+  }
+  
+  // Menu Documentação
+  if (fcuDropdown) {
+    fcuDropdown.innerHTML = us.map(u => 
+      `<label class="nc-option"><input type="checkbox" value="${u}" onchange="updateConfUnidadeLabel()">${u}</label>`
+    ).join('') + `<button class="nc-clear" onclick="clearConfUnidadeFilter()">✕ Limpar seleção</button>`;
+  }
+
+  // Menu Projetos
+  if (projDropdown) {
+    projDropdown.innerHTML = us.map(u => 
+      `<label class="nc-option"><input type="checkbox" value="${u}" onchange="updateProjUnidadeLabel()">${u}</label>`
+    ).join('') + `<button class="nc-clear" onclick="clearProjUnidadeFilter()">✕ Limpar seleção</button>`;
+  }
+  
+  if (fcc) {
+    fcc.innerHTML = '<option value="">Todos os coordenadores</option>';
+    cs.forEach(c=>{const o=document.createElement('option');o.value=o.text=c;fcc.appendChild(o);});
+  }
+}
+
+// Controles do dropdown da aba de Projetos
+function toggleProjUnidadeDropdown(e){
+  e.stopPropagation();
+  const dd = document.getElementById('proj-unidade-dropdown');
+  dd.style.display = dd.style.display !== 'none' ? 'none' : 'block';
+}
+
+function updateProjUnidadeLabel(){
+  const checked = Array.from(document.querySelectorAll('#proj-unidade-dropdown input:checked'));
+  const lbl = document.getElementById('proj-unidade-label');
+  if(!lbl) return;
+  lbl.textContent = checked.length === 0 ? 'Todas as unidades' : checked.length === 1 ? checked[0].value : checked.length + ' unidades selecionadas';
+  lbl.style.color = checked.length > 0 ? 'var(--accent)' : '';
+  filterProjects();
+}
+
+function clearProjUnidadeFilter(){
+  document.querySelectorAll('#proj-unidade-dropdown input').forEach(i => i.checked = false);
+  updateProjUnidadeLabel();
+}
+
+// Fecha menus ao clicar fora
+document.addEventListener('click', function(e){
+  const ddNC = document.getElementById('nc-dropdown');
+  if(ddNC && !e.target.closest('#nc-dropdown-wrap')) ddNC.style.display = 'none';
+  const ddConfUn = document.getElementById('conf-unidade-dropdown');
+  if(ddConfUn && !e.target.closest('#conf-unidade-wrap')) ddConfUn.style.display = 'none';
+  const ddProjUn = document.getElementById('proj-unidade-dropdown');
+  if(ddProjUn && !e.target.closest('#proj-unidade-wrap')) ddProjUn.style.display = 'none';
+});
 
 function clearNCFilter(){
   document.querySelectorAll('#nc-dropdown input').forEach(i=>i.checked=false);
@@ -3856,20 +3439,31 @@ window.parseDateCSAT = function(d) {
   return 0;
 };
 
+// Função auxiliar para extrair formato mm/aaaa das datas das pesquisas
+function getMesAno(dateStr) {
+  if (!dateStr) return '';
+  const s = String(dateStr).trim();
+  let m = s.match(/^(\d{4})[-/](\d{2})[-/](\d{2})/); // YYYY-MM-DD
+  if (m) return `${m[2]}/${m[1]}`;
+  m = s.match(/^(\d{2})[-/](\d{2})[-/](\d{4})/);     // DD/MM/YYYY
+  if (m) return `${m[2]}/${m[3]}`;
+  return '';
+}
 function loadCSAT(parsed, filename){
   // Extrator dinâmico e blindado de colunas (ignora acentos, espaços e variações)
+  const normalizeHeader = value => String(value || '').toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ');
   const findKey = (row, words) => {
-    const k = Object.keys(row).find(key => {
-      const cleanKey = key.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-      return words.some(w => cleanKey.includes(w));
-    });
+    const aliases = words.map(normalizeHeader);
+    const keys = Object.keys(row);
+    let k = keys.find(key => aliases.includes(normalizeHeader(key)));
+    if (!k) k = keys.find(key => aliases.some(w => normalizeHeader(key).includes(w)));
     return k ? String(row[k]).trim() : '';
   };
 
   surveys = parsed.rows.map((row, index) => ({
     fap: findKey(row, ['fap', 'unidade fap', 'numero fap', 'nº fap']).replace(/[^\d]/g,''),
     codParceiro: findKey(row, ['cod parceiro', 'codigo parceiro']).replace(/[^\d]/g,''),
-    parceiro: findKey(row, ['parceiro']),
+    parceiro: findKey(row, ['nome do parceiro', 'nome parceiro', 'parceiro', 'cliente', 'razao social']),
     csat: findKey(row, ['csat']).toUpperCase(),
     dataPesq: findKey(row, ['data pesquisa', 'datapesquisa', 'data', 'criado em']),
     entrevistado: findKey(row, ['entrevistado']),
@@ -3919,6 +3513,16 @@ function loadCSAT(parsed, filename){
   const fu = document.getElementById('csat-filt-unidade');
   fu.innerHTML = '<option value="">Todas as unidades</option>';
   units.forEach(u => { const o = document.createElement('option'); o.value = o.text = u; fu.appendChild(o); });
+  // Popular filtro dinâmico de meses/ano (mm/aaaa)
+  const meses = [...new Set(surveys.map(s => getMesAno(s.dataPesq)).filter(Boolean))].sort((a,b) => {
+    const [mA, yA] = a.split('/'), [mB, yB] = b.split('/');
+    return new Date(yA, mA-1) - new Date(yB, mB-1);
+  });
+  const fmes = document.getElementById('csat-filt-mesano');
+  if(fmes) {
+    fmes.innerHTML = '<option value="">Todos os meses (mm/aaaa)</option>';
+    meses.forEach(m => { const o = document.createElement('option'); o.value = o.text = m; fmes.appendChild(o); });
+  }
 
   const regionais = [...new Set(surveys.map(s => s.regional).filter(Boolean))].sort();
   const freg = document.getElementById('csat-filt-regional');
@@ -4004,26 +3608,75 @@ function analyzeCSATRisk(survey, proj, pSurveys) {
   return { cerebroScore, motorScore, srTotal, clusters, motorTags };
 }
 
-// ─── TABELA COM ORDENAÇÃO E FILTRO REGIONAL ───
+// Função auxiliar blindada para extrair o Mês/Ano (mm/aaaa)
+window.getMesAno = function(dateStr) {
+  if (!dateStr) return '';
+  const s = String(dateStr).trim();
+  let m = s.match(/^(\d{4})[-/](\d{2})[-/](\d{2})/);
+  if (m) return `${m[2]}/${m[1]}`;
+  m = s.match(/^(\d{2})[-/](\d{2})[-/](\d{4})/);
+  if (m) return `${m[2]}/${m[3]}`;
+  return '';
+};
+
+function cleanDigits(value) {
+  return String(value || '').replace(/[^\d]/g, '');
+}
+
+function normalizePartnerName(value) {
+  return String(value || '').toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ');
+}
+
+function findProjectForCSAT(survey) {
+  const surveyFap = cleanDigits(survey && survey.fap);
+  const surveyCod = cleanDigits(survey && survey.codParceiro) || cleanDigits(survey && survey.parceiro);
+  const surveyName = normalizePartnerName(survey && survey.parceiro);
+  return projects.find(project => {
+    const projectFap = cleanDigits(project.fap);
+    if (surveyFap && projectFap === surveyFap) return true;
+    const projectCod = cleanDigits(project.codParceiro);
+    if (surveyCod && projectCod && projectCod === surveyCod) return true;
+    return !!(surveyName && surveyName === normalizePartnerName(project.nomeParceiro));
+  });
+}
+// ─── TABELA COM FILTRAGEM DIRETA DA PLANILHA ───
 function renderCSATTable() {
-  const nota = document.getElementById('csat-filt-nota').value;
-  const tipo = document.getElementById('csat-filt-tipo').value;
-  const un = document.getElementById('csat-filt-unidade').value;
-  const regEl = document.getElementById('csat-filt-regional');
-  const reg = regEl ? regEl.value : '';
+  const nota = document.getElementById('csat-filt-nota') ? document.getElementById('csat-filt-nota').value : '';
+  const tipo = document.getElementById('csat-filt-tipo') ? document.getElementById('csat-filt-tipo').value : '';
+  const un = document.getElementById('csat-filt-unidade') ? document.getElementById('csat-filt-unidade').value : '';
+  const regFilt = document.getElementById('csat-filt-regional') ? document.getElementById('csat-filt-regional').value : '';
+  const mesanoFilt = document.getElementById('csat-filt-mesano') ? document.getElementById('csat-filt-mesano').value : '';
   
   let processedSurveys = surveys.map(s => {
-    const p = projects.find(x => x.fap === s.fap);
-    const pSurveys = surveys.filter(x => x.fap === s.fap);
-    const sr = analyzeCSATRisk(s, p, pSurveys);
+    // Forca a limpeza da FAP e usa o codigo do parceiro como segunda chave de cruzamento.
+    const cleanFapS = cleanDigits(s.fap);
+    const cleanCodS = cleanDigits(s.codParceiro) || (/^[\d\s.\-_/]+$/.test(String(s.parceiro || '').trim()) ? cleanDigits(s.parceiro) : '');
+    const p = findProjectForCSAT(s);
+    const cleanProjectCod = p ? cleanDigits(p.codParceiro) : '';
+    const pSurveys = surveys.filter(x => {
+      const xfap = cleanDigits(x.fap);
+      const xcod = cleanDigits(x.codParceiro);
+      if (cleanFapS && xfap === cleanFapS) return true;
+      if (cleanCodS && xcod === cleanCodS) return true;
+      return !!(cleanProjectCod && xcod === cleanProjectCod);
+    });
+    
+    const sr = mesanoFilt ? analyzeCSATRisk(s, p, [s]) : analyzeCSATRisk(s, p, pSurveys);
     return { s, p, pSurveys, sr };
   });
 
   let filtered = processedSurveys.filter(item => {
     if(nota && item.s.csat !== nota) return false;
     if(tipo && !item.s.tipoPesq.includes(tipo)) return false;
+    
+    // Usa diretamente as colunas "Unidade" e "Regional" que vieram na planilha do CSAT!
     if(un && item.s.unidade !== un) return false;
-    if(reg && item.s.regional !== reg) return false;
+    if(regFilt && item.s.regional !== regFilt) return false;
+    
+    if (mesanoFilt) {
+      if (window.getMesAno(item.s.dataPesq) !== mesanoFilt) return false;
+    }
+    
     return true;
   });
 
@@ -4033,11 +3686,15 @@ function renderCSATTable() {
     return ob - oa; 
   });
 
-  document.getElementById('csat-table-tag').textContent = filtered.length + ' pesquisas';
+  const tag = document.getElementById('csat-table-tag');
+  if(tag) tag.textContent = filtered.length + ' pesquisas';
   
-  document.getElementById('csat-tbody').innerHTML = filtered.map(item => {
+  const tbody = document.getElementById('csat-tbody');
+  if(!tbody) return;
+
+  tbody.innerHTML = filtered.map(item => {
     const s = item.s;
-    const p = item.p; // Acessa o objeto do projeto completo
+    const p = item.p;
     const sr = item.sr;
     
     let srClass = 'sr-none';
@@ -4049,14 +3706,21 @@ function renderCSATTable() {
     const motorHtml = sr.motorTags.map(c => `<span class="tag-motor" title="${c.desc}">${c.nome}</span>`).join('');
     const comentarioLimpo = s.comentario ? s.comentario.replace(/"/g, '&quot;') : '';
 
-    // AQUI: Forçamos a exibição da nota mais recente do projeto
-    const notaExibicao = (p && p.csatLast) ? p.csatLast : s.csat;
+    const notaExibicao = mesanoFilt ? s.csat : ((p && p.csatLast) ? p.csatLast : s.csat);
+    const dataExibicao = mesanoFilt ? s.dataPesq : ((p && p.surveys && p.surveys.length > 0) ? p.surveys[p.surveys.length - 1].dataPesq : s.dataPesq);
+
+    // BLINDAGEM NOME
+    let nomeTabela = 'Parceiro não identificado';
+    const parceiroCSAT = String(s.parceiro || '').trim();
+    const parceiroEhCodigo = parceiroCSAT && /^[\d\s.\-_/]+$/.test(parceiroCSAT);
+    if (p && p.nomeParceiro && String(p.nomeParceiro) !== 'undefined' && String(p.nomeParceiro).trim() !== '') nomeTabela = p.nomeParceiro;
+    else if (parceiroCSAT && String(parceiroCSAT) !== 'undefined' && !parceiroEhCodigo) nomeTabela = parceiroCSAT;
 
     return `<tr style="cursor:pointer; transition: background 0.2s;" onmouseenter="this.style.background='var(--bg4)'" onmouseleave="this.style.background=''" onclick="openCSATModal('${s.fap}')" title="Clique para ver o histórico completo">
       <td style="font-family:var(--mono);font-size:11px;font-weight:600;color:var(--text)">${s.fap||'—'}</td>
-      <td style="font-size:11px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.parceiro}</td>
-      <td style="vertical-align:middle" title="Nota atual do projeto">${csatBadge(notaExibicao, true)}</td>
-      <td style="font-size:11px;color:var(--text3)">${s.dataPesq}</td>
+      <td style="font-size:11px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${nomeTabela}">${nomeTabela}</td>
+      <td style="vertical-align:middle" title="${mesanoFilt ? 'Nota neste mês específico' : 'Última nota do projeto'}">${csatBadge(notaExibicao, true)}</td>
+      <td style="font-size:11px;color:var(--text3)">${dataExibicao}</td>
       <td style="text-align:center"><span class="sr-badge ${srClass}" title="Score: ${sr.srTotal} pontos">${sr.srTotal}</span></td>
       <td style="max-width:120px; white-space:normal">${cerebroHtml || '<span style="color:var(--text3);font-size:10px">—</span>'}</td>
       <td style="max-width:120px; white-space:normal">${motorHtml || '<span style="color:var(--text3);font-size:10px">—</span>'}</td>
@@ -4065,13 +3729,14 @@ function renderCSATTable() {
   }).join('');
 }
 
-// ─── MODAL COM LINHA DO TEMPO CRONOLÓGICA (Mais antigo em cima, mais novo embaixo) ───
+// ─── MODAL COM LINHA DO TEMPO CRONOLÓGICA ───
 function openCSATModal(fap) {
-  const p = projects.find(x => x.fap === fap);
-  const ps = surveys.filter(s => s.fap === fap);
+  // Limpa caracteres especiais para garantir que o cruzamento ocorra
+  const cleanFap = String(fap).replace(/[^\d]/g, '');
+  const p = projects.find(x => String(x.fap).replace(/[^\d]/g, '') === cleanFap);
+  const ps = surveys.filter(s => String(s.fap).replace(/[^\d]/g, '') === cleanFap);
   if(!ps.length) return;
 
-  // Tripla camada de ordenação no Modal: Mais antigo no topo, mais novo embaixo
   ps.sort((a,b) => {
     let dDiff = window.parseDateCSAT(a.dataPesq) - window.parseDateCSAT(b.dataPesq);
     if (dDiff !== 0) return dDiff;
@@ -4080,8 +3745,16 @@ function openCSATModal(fap) {
     return a._idx - b._idx;
   });
 
-  document.getElementById('csat-modal-title').textContent = (p ? p.nomeParceiro : fap);
-  document.getElementById('csat-modal-sub').textContent = 'FAP ' + fap + (p ? ' · ' + p.coordenador + ' · ' + p.unidade : '');
+  // BLINDAGEM NOME DO MODAL
+  let nomeParceiroExibicao = 'FAP ' + fap;
+  if (p && p.nomeParceiro && String(p.nomeParceiro) !== 'undefined' && String(p.nomeParceiro).trim() !== '') {
+    nomeParceiroExibicao = p.nomeParceiro;
+  } else if (ps[0] && ps[0].parceiro && String(ps[0].parceiro) !== 'undefined' && String(ps[0].parceiro).trim() !== '') {
+    nomeParceiroExibicao = ps[0].parceiro;
+  }
+
+  document.getElementById('csat-modal-title').textContent = nomeParceiroExibicao;
+  document.getElementById('csat-modal-sub').textContent = 'FAP ' + (p ? p.fap : fap) + (p ? ' · ' + p.coordenador + ' · ' + p.unidade : '');
 
   // 1. CÉREBRO E MOTOR PREDITIVO ACUMULADO
   let sr = 0;
@@ -4326,7 +3999,26 @@ function openScoreModal(fap){
 
   // CSAT
   if(csatLoaded&&p.csatNeg>0){
-    _ativos.add('CSAT negativo');
+    // Calcula o peso dinâmico do CSAT negativo para o modal
+    let baseWeight = WEIGHTS['CSAT negativo'] || 0;
+    let finalWeight = baseWeight;
+    let desc = 'CSAT negativo (Última pesquisa)';
+    
+    if (p.surveys && p.surveys.length > 0) {
+      const lastSurvey = p.surveys[p.surveys.length - 1];
+      const sr = analyzeCSATRisk(lastSurvey, null, null);
+      const cerebro = sr.cerebroScore;
+      
+      if (cerebro > 4) {
+        const steps = Math.floor((cerebro - 4) / 2);
+        const mult = (1.0 + steps * 0.2).toFixed(1);
+        finalWeight = baseWeight * (1.0 + steps * 0.2);
+        desc = `CSAT negativo (Multiplicador x${mult} por ${cerebro} pts no Cérebro)`;
+      }
+    }
+    finalWeight = Math.min(30, Math.round(finalWeight));
+    fatoresDinamicos.push([desc, finalWeight]);
+
     const CNEG=new Set(['INSATISFEITO','MUITO INSATISFEITO','INDIFERENTE']);
     if(fcaData.length>0&&!fcaData.some(f=>f.fap===p.fap)) _ativos.add('CSAT negativo sem FCA válido');
     if(p.surveys&&p.surveys.length>=2&&p.surveys.slice(-2).every(s=>CNEG.has(s.csat))) _ativos.add('CSAT consecutivo negativo');
@@ -4484,8 +4176,7 @@ function openScoreModal(fap){
     +'<span style="font-family:var(--mono);font-size:9px;padding:2px 8px;border-radius:2px;border:1px solid '+rb+';color:'+rb+'">'+r+'</span>'
     +'<span style="font-family:var(--mono);font-size:9px;color:var(--text3)">Faixa: '+faixaMin+'–'+faixaMax+'</span>'
     +'</div>'
-    +'<div style="margin-bottom:10px;padding:6px 10px;background:'+bgM
-otivo+';border-left:2px solid '+blMotivo+';border-radius:0 3px 3px 0">'
+    +'<div style="margin-bottom:10px;padding:6px 10px;background:'+bgMotivo+';border-left:2px solid '+blMotivo+';border-radius:0 3px 3px 0">'
     +'<div style="font-family:var(--mono);font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:'+rb+';margin-bottom:3px">Motivo da classificação</div>'
     +'<div style="font-size:11px;color:var(--text2)">'+motivoClass.join(' + ')+'</div>'
     +'<div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:2px">Score ordenado dentro da faixa '+r+' ('+faixaMin+'–'+faixaMax+')</div>'
@@ -4683,7 +4374,8 @@ function openStatusHistory(fap, parceiro){
   const footer=suspensoes.length>0
     ?`<div style="margin-top:16px;padding:14px 16px;background:rgba(240,165,0,.08);border:1px solid rgba(240,165,0,.25);border-radius:3px;display:flex;gap:32px;align-items:center">
         <div style="text-align:center">
-          <div style="font-family:var(--mono);font-size:9px;letter-spacing:.08em;color:var(--text3);margin-bottom:4px">TOTAL DE SUSPENSÕES</div>
+          <div style="font-family:var(--mono);font-size:9px;letter-spacing:.08em;color:var(--text3);margin-bottom:4px">TOTAL DE SU
+SPENSÕES</div>
           <div style="font-size:28px;font-weight:700;color:var(--warn)">${suspensoes.length}</div>
         </div>
         <div style="text-align:center">
@@ -4897,31 +4589,6 @@ function buildFCAView(){
       +'</tr>';
   }).join('');
 }
-
-function openInTab(outputId, title){
-  const el=document.getElementById(outputId);
-  if(!el||el.querySelector('.ai-output-placeholder')){
-    alert('Execute a análise de IA primeiro.');
-    return;
-  }
-  const date=new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
-  const fileLabel=document.getElementById('topbar-file')?.textContent||'';
-  const clone=el.cloneNode(true);
-  clone.querySelectorAll('.open-tab-btn,.loading-bar').forEach(b=>b.remove());
-
-  const body=document.getElementById('report-modal-body');
-  body.innerHTML=
-    '<h1>'+title+'</h1>'
-    +'<div class="r-meta">'+fileLabel+' &nbsp;|&nbsp; '+date+'</div>'
-    +''
-    +clone.innerHTML
-    +'<div class="r-footer">Agente de Riscos | '+date+'</div>';
-
-  const overlay=document.getElementById('report-modal-overlay');
-  overlay.style.display='flex';
-  overlay.scrollTop=0;
-}
-
 
 
 // ═══ SINAIS DE RISCO POR PROJETO ═══
@@ -6153,9 +5820,8 @@ function openClienteModal(idx) {
         + '<td style="padding:8px 10px;font-size:11px;cursor:pointer" onclick="event.stopPropagation();openStatusHistory(\'' + p.fap + '\',\'' + (p.nomeParceiro||'').replace(/'/g,"\\\'") + '\')"><span class="badge ' + (p.status === 'SUSPENSO' ? 'badge-susp' : 'badge-run') + '" style="cursor:pointer">' + p.status + '</span></td>'
         + '<td style="padding:8px 10px;cursor:pointer" onclick="event.stopPropagation();openTermoHistory(\'' + p.fap + '\')"><span style="font-family:var(--mono);font-size:10px;padding:2px 6px;border-radius:2px;border:1px solid ' + tc + ';color:' + tc + ';cursor:pointer">' + (p.termometro || '—') + '</span></td>'
         + '<td style="padding:8px 10px;text-align:center"><span class="badge ' + rb(p.risco) + '">' + p.risco + '</span></td>'
-        + '<td style="padding:8px 10px;text-align:center;font-family:var(--mono);font-size:11px;font-weight:600;color:' + pcol + '">' + p.score + '</td>'
-        + '<td style="padding:8px 10px;text-align:center;font-family:var(--mono);font-size:10px;color:' + (p.csatLast ? csatCol : 'var(--text3)') + '">' + (p.csatLast ? (csatAbbr[p.csatLast.toUpperCase()] || p.csatLast) : '—') + '</td>'
-        + '<td style="padding:8px 10px;font-size:11px;color:var(--text3)">' + p.coordenador + '</td>'
+        + '<td style="padding:8px 10px;text-align:center;font-family:var(--mono);font-size:11px;font-weight:600;color:' + pcol + ';cursor:pointer;text-decoration:underline dotted" title="Ver composição do score" onclick="event.stopPropagation();openScoreModal(\'' + p.fap + '\')">' + p.score + '</td>'
+        + '<td style="padding:8px 10px;text-align:center;font-family:var(--mono);font-size:10px;color:' + (p.csatLast ? csatCol : 'var(--text3)') + ';' + (p.csatLast ? 'cursor:pointer;text-decoration:underline dotted' : '') + '" ' + (p.csatLast ? 'title="Ver histórico CSAT" onclick="event.stopPropagation();openCSATModal(\'' + p.fap + '\')"' : '') + '>' + (p.csatLast ? (csatAbbr[p.csatLast.toUpperCase()] || p.csatLast) : '—') + '</td>'
         + '</tr>';
     }).join('');
 
@@ -6312,20 +5978,108 @@ function toggleTheme() {
   }
 }
 
-// Verifica a preferência salva ao carregar a página
-window.addEventListener('DOMContentLoaded', () => {
+// 🌐 CONFIGURAÇÃO LINK DA BASE DE DADOS (Substitua pela sua URL real gerada no Google Apps Script)
+const GOOGLE_SHEETS_DATABASE_URL = "https://script.google.com/macros/s/AKfycbyv0xV7LRTjFyT51l4eelerad1SuJzJTD0xAVSEd_300OEYqRP0PYpWr6nNAgV3_lXfNw/exec";
+
+window.addEventListener('DOMContentLoaded', async () => {
+  // 1. Definição do tema (Claro/Escuro)
   const savedTheme = localStorage.getItem('agenteRiscosTheme');
   const btn = document.getElementById('btn-theme-toggle');
   if (savedTheme === 'light') {
     document.body.classList.add('light-mode');
     if (btn) btn.textContent = '🌙 Escuro';
   }
+
+  // 2. Auto-Load Inteligente
+  if (GOOGLE_SHEETS_DATABASE_URL && !GOOGLE_SHEETS_DATABASE_URL.includes("https://script.google.com/macros/s/AKfycbyv0xV7LRTjFyT51l4eelerad1SuJzJTD0xAVSEd_300OEYqRP0PYpWr6nNAgV3_lXfNw/exec")) {
+    try {
+      // Feedback visual na tela de upload
+      const dropZone = document.getElementById('drop-zone');
+      if (dropZone) {
+        dropZone.style.pointerEvents = 'none';
+        dropZone.innerHTML = '<div class="spinner" style="margin: 0 auto 15px; width: 40px; height: 40px; border-width: 4px;"></div>' +
+                             '<div class="drop-title" style="color:var(--info)">A sincronizar com a Nuvem...</div>' +
+                             '<div class="drop-sub">A descarregar dados do Google Sheets em tempo real</div>';
+      }
+      
+      // Faz o download dos dados da planilha
+      const response = await fetch(GOOGLE_SHEETS_DATABASE_URL, { redirect: "follow" });
+      const data = await response.json();
+      
+      // ORDEM OBRIGATÓRIA DE CARREGAMENTO:
+      // 1º Carrega as listas de apoio
+      if (data.fca && data.fca.length > 0) loadFCA(data.fca);
+      if (data.termo && data.termo.length > 0) loadTermoHistory(data.termo);
+      if (data.diario && data.diario.length > 0) loadDiarioBordo(data.diario);
+      if (data.status && data.status.length > 0) loadHistoricoStatus(data.status);
+      if (data.lbp && data.lbp.length > 0) loadLinhaBasePrazo(data.lbp);
+      
+      // 2º Carrega os Projetos (Gera a base e oculta o ecrã de upload)
+      if (data.conformidade && data.conformidade.rows && data.conformidade.rows.length > 0) {
+        loadData(data.conformidade, "Base Nuvem");
+      } else {
+        throw new Error("A aba CONFORMIDADE não foi encontrada ou está vazia na nuvem.");
+      }
+
+      // 3º Carrega o CSAT (Precisa que os projetos já existam para se vincular a eles)
+      if (data.csat && data.csat.rows && data.csat.rows.length > 0) {
+        loadCSAT(data.csat, "CSAT Nuvem");
+      }
+
+    } catch (error) {
+      console.error("Falha na nuvem:", error);
+      alert("Falha na sincronização com o Google Sheets.\nO sistema voltará para o modo manual.\nErro: " + error.message);
+      location.reload(); // Recarrega para voltar à tela manual em caso de erro
+    }
+  }
 });
 // ─── MOTOR DO KANBAN DE AÇÕES NA NUVEM + BACKUP LOCAL ───
-const GOOGLE_SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbwxmpMYYS5fC5gPKI3Wfqvj_VdfIRrtvcZ4APomfYo/dev"; // ⚠ OBRIGATÓRIO COLAR A URL AQUI!
+const GOOGLE_SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbwqHb7i13NV0bFJkrEtBvs9fnTu_ezcsTIA21-ZA_1JeeNTa682hiKlsPohrYkAixxD/exec"; // ⚠ OBRIGATÓRIO COLAR A URL AQUI!
 
 // Inicia com o que tem salvo no computador (backup) até a nuvem responder
 let kanbanTasks = JSON.parse(localStorage.getItem('agenteRiscosKanbanBackup')) || [];
+// Dicionário 100% COMPLETO de Relação Unidade x GRP
+const mapUnidadeGRP = {
+  "ADMINISTRATIVO ABC PAULISTA": "Douglas Xavier",
+  "BP ABC PAULISTA": "Douglas Xavier",
+  "ADMINISTRATIVO ALPHAVILLE": "Lucas Eduardo",
+  "BP BANDEIRANTES": "Lucas Eduardo",
+  "ADMINISTRATIVO BH PAMPULHA": "Marden Chaves",
+  "ADMINISTRATIVO CEARÁ": "Lucas Eduardo",
+  "BP CEARÁ": "Lucas Eduardo",
+  "BP CENTRO NORTE": "Lucas Eduardo",
+  "ADMINISTRATIVO CURITIBA ARGOS": "Marden Chaves",
+  "SERVIÇOS CURITIBA ARGOS": "Marden Chaves",
+  "ADMINISTRATIVO BP INTERIOR PARANAENSE": "Marden Chaves",
+  "BP INTERIOR PARANAENSE": "Marden Chaves",
+  "ADMINISTRATIVO JUNDIAI": "Douglas Xavier",
+  "ADMINISTRATIVO LITORAL CATARINENSE": "Marden Chaves",
+  "ADMINISTRATIVO MATO GROSSO": "Marden Chaves",
+  "ADMINISTRATIVO MATO GROSSO DO SUL": "Marden Chaves",
+  "ADMINISTRATIVO NORTE CATARINENSE": "Marden Chaves",
+  "ADMINISTRATIVO NORTE DE MINAS": "Marden Chaves",
+  "BP NORTE DE MINAS": "Marden Chaves",
+  "ADMINISTRATIVO RECIFE": "Douglas Xavier",
+  "ADMINISTRATIVO BP RIO DE JANEIRO": "Lucas Eduardo",
+  "BP RIO DE JANEIRO": "Lucas Eduardo",
+  "COMERCIAL BP RIO DE JANEIRO": "Lucas Eduardo",
+  "ADMINISTRATIVO RIO GRANDE DO NORTE": "Marden Chaves",
+  "ADMINISTRATIVO SANTA CATARINA": "Marden Chaves",
+  "ADMINISTRATIVO SAO PAULO BERRINI": "Douglas Xavier",
+  "BP SAO PAULO BERRINI": "Douglas Xavier",
+  "SERVIÇOS SAO PAULO BERRINI": "Douglas Xavier",
+  "ADMINISTRATIVO SP MOEMA": "Alessandro Vicentini",
+  "ADMINISTRATIVO SUDESTE PAULISTA": "Douglas Xavier",
+  "ADMINISTRATIVO VITÓRIA DA CONQUISTA": "Douglas Xavier",
+  "BASE SERVICE": "Sem regional",
+  
+  // ── Novas unidades adicionadas e corrigidas ──
+  "DELIVERY CENTER": "Alessandro Vicentini/Daniela Dias",
+  "PROJETOS I": "Alessandro Vicentini/Daniela Dias",
+  "PROJETOS II": "Alessandro Vicentini/Daniela Dias",
+  "ADMINISTRATIVO SAO PAULO": "Daniela Dias",
+  "ADMINISTRATIVO DELIVERY ENTERPRISE": "Daniela Dias"
+};
 let kbSelectedProj = null;
 
 async function loadKanbanFromCloud() {
@@ -6351,61 +6105,107 @@ async function loadKanbanFromCloud() {
 }
 
 async function saveKanban() {
-  // 1. Salva localmente IMEDIATAMENTE (Blindagem contra perda de dados)
+  // 1. Salva localmente primeiro (Backup imediato na tela)
   localStorage.setItem('agenteRiscosKanbanBackup', JSON.stringify(kanbanTasks));
   renderKanban(); 
   
-  // 2. Tenta enviar para o Google Sheets silenciosamente
+  // 2. Envia para a nuvem em formato texto puro para burlar o bloqueio CORS
   try {
     await fetch(GOOGLE_SHEETS_API_URL, { 
       method: 'POST', 
-      mode: 'no-cors', // MÁGICA: Impede o Google de bloquear a requisição por CORS
-      body: JSON.stringify(kanbanTasks), 
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' } 
+      mode: 'no-cors', 
+      body: JSON.stringify(kanbanTasks)
+      // Removemos os 'headers' para evitar a requisição de pré-verificação (OPTIONS) do navegador
     });
   } catch (error) { 
-    console.error("Erro ao enviar para a nuvem:", error); 
+    console.error("Erro ao comunicar com a nuvem:", error); 
   }
 }
 
-// ─── RENDERIZAÇÃO DOS CARDS NO QUADRO ───
+// ─── RENDERIZAÇÃO BLINDADA DOS CARDS ───
 function renderKanban() {
-  const cols = { todo: document.getElementById('kb-col-todo'), doing: document.getElementById('kb-col-doing'), done: document.getElementById('kb-col-done') };
-  if(!cols.todo) return;
-  cols.todo.innerHTML = ''; cols.doing.innerHTML = ''; cols.done.innerHTML = '';
-  
-  const regFilt = document.getElementById('kb-filt-regional') ? document.getElementById('kb-filt-regional').value : '';
-  let counts = { todo: 0, doing: 0, done: 0 };
-
-  kanbanTasks.forEach(task => {
-    if (regFilt && task.regional !== regFilt) return;
-    counts[task.status]++;
+  try {
+    const cols = { todo: document.getElementById('kb-col-todo'), doing: document.getElementById('kb-col-doing'), done: document.getElementById('kb-col-done') };
+    if(!cols.todo) return;
+    cols.todo.innerHTML = ''; cols.doing.innerHTML = ''; cols.done.innerHTML = '';
     
-    const prioClass = task.prio === 'Alta' ? 'prio-alta' : task.prio === 'Média' ? 'prio-media' : '';
-    const btnBack = task.status === 'done' ? `<button class="k-btn" onclick="moveKanbanTask('${task.id}', 'doing')">◀</button>` : task.status === 'doing' ? `<button class="k-btn" onclick="moveKanbanTask('${task.id}', 'todo')">◀</button>` : '';
-    const btnNext = task.status === 'todo' ? `<button class="k-btn" onclick="moveKanbanTask('${task.id}', 'doing')">▶</button>` : task.status === 'doing' ? `<button class="k-btn" onclick="moveKanbanTask('${task.id}', 'done')">▶</button>` : '';
+    const grpFiltEl = document.getElementById('kb-filt-grp');
+    const regFiltEl = document.getElementById('kb-filt-regional');
+    const grpFilt = grpFiltEl ? grpFiltEl.value : '';
+    const regFilt = regFiltEl ? regFiltEl.value : '';
+    
+    let counts = { todo: 0, doing: 0, done: 0 };
 
-    const cardHTML = `
-      <div class="k-card ${prioClass}">
-        <div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-bottom:3px">FAP ${task.fap}</div>
-        <div class="k-title" style="margin-bottom:8px">${task.parceiro}</div>
-        <div style="font-size:10px;color:var(--accent);background:rgba(232,64,64,.1);padding:3px 6px;border-radius:2px;border:1px solid rgba(232,64,64,.2);margin-bottom:10px;display:inline-block">🚨 ${task.problema}</div>
-        <div class="k-desc"><strong>Ação:</strong> ${task.acao}</div>
-        <div class="k-meta">
-          <span>${task.regional ? `📍 ${task.regional}` : '—'}</span>
-          <span>📅 ${task.date}</span>
-        </div>
-        <div class="k-meta" style="margin-top:8px; border:none; padding-top:0;">
-          <button class="k-btn del" onclick="deleteKanbanTask('${task.id}')">Excluir</button>
-          <div class="k-actions">${btnBack}${btnNext}</div>
-        </div>
-      </div>`;
-    cols[task.status].innerHTML += cardHTML;
-  });
+    kanbanTasks.forEach(task => {
+      // Limpa os espaços e busca no dicionário com segurança
+      const regNorm = (task.regional || '').trim();
+      const taskGRP = mapUnidadeGRP[regNorm] || 'Sem regional';
+      
+      if (grpFilt && !taskGRP.includes(grpFilt)) return;
+      if (regFilt && regNorm !== regFilt) return;
+      
+      if(counts[task.status] !== undefined) counts[task.status]++;
+      
+      const prioClass = task.prio === 'Alta' ? 'prio-alta' : task.prio === 'Média' ? 'prio-media' : '';
+      const btnBack = task.status === 'done' ? `<button class="k-btn" onclick="moveKanbanTask('${task.id}', 'doing')">◀</button>` : task.status === 'doing' ? `<button class="k-btn" onclick="moveKanbanTask('${task.id}', 'todo')">◀</button>` : '';
+      const btnNext = task.status === 'todo' ? `<button class="k-btn" onclick="moveKanbanTask('${task.id}', 'doing')">▶</button>` : task.status === 'doing' ? `<button class="k-btn" onclick="moveKanbanTask('${task.id}', 'done')">▶</button>` : '';
 
-  document.getElementById('kb-count-todo').textContent = counts.todo;
-  document.getElementById('kb-count-doing').textContent = counts.doing;
-  document.getElementById('kb-count-done').textContent = counts.done;
+      const cardHTML = `
+        <div class="k-card ${prioClass}">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-bottom:3px">FAP ${task.fap}</div>
+          <div class="k-title" style="margin-bottom:8px">${task.parceiro}</div>
+          <div style="font-size:10px;color:var(--accent);background:rgba(232,64,64,.1);padding:3px 6px;border-radius:2px;border:1px solid rgba(232,64,64,.2);margin-bottom:10px;display:inline-block">🚨 ${task.problema}</div>
+          <div class="k-desc"><strong>Ação:</strong> ${task.acao}</div>
+          <div class="k-meta">
+            <span>${task.regional ? `📍 ${task.regional}` : '—'}</span>
+            <span>📅 ${task.date}</span>
+          </div>
+          <div class="k-meta" style="margin-top:8px; border:none; padding-top:0;">
+            <button class="k-btn del" onclick="deleteKanbanTask('${task.id}')">Excluir</button>
+            <div class="k-actions">${btnBack}${btnNext}</div>
+          </div>
+        </div>`;
+      if(cols[task.status]) cols[task.status].innerHTML += cardHTML;
+    });
+
+    document.getElementById('kb-count-todo').textContent = counts.todo;
+    document.getElementById('kb-count-doing').textContent = counts.doing;
+    document.getElementById('kb-count-done').textContent = counts.done;
+  } catch(e) {
+    console.error("Erro ao desenhar o Kanban:", e);
+  }
+}
+// ─── SALVAMENTO COM VALIDAÇÃO MULTI-GERENTE ───
+function saveNewKanbanTask() {
+  if (!kbSelectedProj) { alert("Selecione um projeto primeiro!"); return; }
+  
+  const selectedGrpFilt = document.getElementById('kb-filt-grp').value;
+  const projectGRP = mapUnidadeGRP[kbSelectedProj.unidade] || 'Sem regional';
+
+  // CORREÇÃO: Permite salvar se o filtro selecionado fizer parte da lista de GRPs responsáveis
+  if (selectedGrpFilt && !projectGRP.includes(selectedGrpFilt)) {
+    alert(`Acesso bloqueado:\n\nEste projeto pertence à unidade [${kbSelectedProj.unidade}], que é de responsabilidade de: [${projectGRP}].\n\nVocê está utilizando o filtro de [${selectedGrpFilt}]. Modifique o filtro superior para prosseguir.`);
+    return;
+  }
+
+  const acao = document.getElementById('kb-input-acao').value.trim();
+  if (!acao) { alert("Descreva o plano de ação!"); return; }
+
+  const newTask = {
+    id: Date.now().toString(),
+    fap: kbSelectedProj.fap,
+    parceiro: kbSelectedProj.nomeParceiro,
+    problema: document.getElementById('kb-input-prob').value,
+    acao: acao,
+    regional: kbSelectedProj.unidade || '',
+    prio: document.getElementById('kb-input-prio').value,
+    status: 'todo',
+    date: new Date().toLocaleDateString('pt-BR')
+  };
+
+  kanbanTasks.push(newTask);
+  saveKanban();
+  document.getElementById('kb-form-overlay').style.display = 'none';
 }
 
 // ─── LÓGICA DO FORMULÁRIO DINÂMICO ───
@@ -6435,47 +6235,139 @@ function kbSearchProj() {
   resBox.style.display = 'block';
 }
 
+// ─── SELEÇÃO DO PROJETO COM UNIFICAÇÃO DE NÃO CONFORMIDADES DE DOCUMENTOS ───
 function kbSelectProj(fap) {
   kbSelectedProj = projects.find(p => p.fap === fap);
+  if(!kbSelectedProj) return;
+
   document.getElementById('kb-input-proj').value = kbSelectedProj.fap + ' - ' + kbSelectedProj.nomeParceiro;
   document.getElementById('kb-proj-results').style.display = 'none';
   
   const probSelect = document.getElementById('kb-input-prob');
-  probSelect.innerHTML = kbSelectedProj.negatives.map(n => `<option value="${n}">${n}</option>`).join('');
-  
-  if(kbSelectedProj.csatLast && CSAT_NEG.includes(kbSelectedProj.csatLast)) probSelect.innerHTML += `<option value="CSAT Negativo: ${kbSelectedProj.csatLast}">CSAT Negativo: ${kbSelectedProj.csatLast}</option>`;
-  if(kbSelectedProj.status === 'SUSPENSO') probSelect.innerHTML += `<option value="Projeto Suspenso">Projeto Suspenso</option>`;
-  probSelect.innerHTML += `<option value="Outro Motivo (Preventivo)">Outro Motivo (Preventivo)</option>`;
+  if(probSelect) {
+    let optionsHtml = '';
+    const docMissing = [];
+    const otherNegatives = [];
+    
+    // Varre os alertas nativos do projeto para separar documentação do resto
+    (kbSelectedProj.negatives || []).forEach(n => {
+      // Se possui "NÃO" e não for atraso de data de cronograma, é documento pendente
+      if (n.includes('NÃO') && !n.startsWith('Cronograma Data')) {
+        const docName = n.replace(': NÃO', '').replace(': NAO', '').trim();
+        docMissing.push(docName);
+      } else {
+        otherNegatives.push(n);
+      }
+    });
+    
+    // 1. Se houver documentos com NÃO, gera a opção unificada conforme seu padrão
+    if (docMissing.length > 0) {
+      const unifiedDocOption = `Conformidade (${docMissing.join('; ')})`;
+      optionsHtml += `<option value="${unifiedDocOption}">${unifiedDocOption}</option>`;
+    }
+    
+    // 2. Mantém os outros problemas operacionais individuais (Ex: Termômetro Crítico, Cronograma Data)
+    otherNegatives.forEach(n => {
+      optionsHtml += `<option value="${n}">${n}</option>`;
+    });
+    
+    // 3. Adiciona as demais tags de contexto do motor de risco
+    if(kbSelectedProj.csatLast && CSAT_NEG.includes(kbSelectedProj.csatLast)) {
+      optionsHtml += `<option value="CSAT Negativo: ${kbSelectedProj.csatLast}">CSAT Negativo: ${kbSelectedProj.csatLast}</option>`;
+    }
+    if(kbSelectedProj.status === 'SUSPENSO') {
+      optionsHtml += `<option value="Projeto Suspenso">Projeto Suspenso</option>`;
+    }
+    optionsHtml += `<option value="Outro Motivo (Preventivo)">Outro Motivo (Preventivo)</option>`;
+    
+    probSelect.innerHTML = optionsHtml;
+  }
 
-  document.getElementById('kb-problema-wrap').style.display = 'block';
+  const probWrap = document.getElementById('kb-problema-wrap');
+  if(probWrap) probWrap.style.display = 'block';
 }
 
+// ─── SALVAMENTO COM VALIDAÇÃO ANTI-TRAVAMENTO E LIMPEZA DE ESPAÇOS ───
 function saveNewKanbanTask() {
-  if (!kbSelectedProj) { alert("Selecione um projeto primeiro!"); return; }
-  const acao = document.getElementById('kb-input-acao').value.trim();
-  if (!acao) { alert("Descreva o plano de ação!"); return; }
+  if (!kbSelectedProj) { 
+    alert("Selecione um projeto na lista de resultados primeiro!"); 
+    return; 
+  }
+  
+  // Leitura segura dos elementos da tela
+  const grpFiltEl = document.getElementById('kb-filt-grp');
+  const selectedGrpFilt = grpFiltEl ? grpFiltEl.value : '';
+  
+  // Limpador mágico: remove espaços duplos ou triplos acidentais do nome da unidade
+  const projReg = (kbSelectedProj.unidade || '').trim().replace(/\s+/g, ' ');
+  
+  // Busca no dicionário garantindo a leitura do nome limpo
+  const projectGRP = mapUnidadeGRP[projReg] || mapUnidadeGRP[(kbSelectedProj.unidade || '').trim()] || 'Sem regional';
+
+  // Validação da trava do Gerente Regional
+  if (selectedGrpFilt && !projectGRP.includes(selectedGrpFilt)) {
+    alert(`ACESSO BLOQUEADO:\n\nEste projeto pertence à unidade [${projReg}], de responsabilidade de: [${projectGRP}].\n\nModifique o filtro superior (Todos os GRPs ou ${projectGRP}) para prosseguir com a criação da ação.`);
+    return;
+  }
+
+  const acaoEl = document.getElementById('kb-input-acao');
+  const acao = acaoEl ? acaoEl.value.trim() : '';
+  if (!acao) { 
+    alert("Descreva o plano de ação!"); 
+    return; 
+  }
+
+  const probEl = document.getElementById('kb-input-prob');
+  const problema = probEl ? probEl.value : 'Ação Preventiva';
+
+  const prioEl = document.getElementById('kb-input-prio');
+  const prio = prioEl ? prioEl.value : 'Média';
 
   const newTask = {
     id: Date.now().toString(),
     fap: kbSelectedProj.fap,
     parceiro: kbSelectedProj.nomeParceiro,
-    problema: document.getElementById('kb-input-prob').value,
+    problema: problema,
     acao: acao,
-    regional: kbSelectedProj.unidade || '',
-    prio: document.getElementById('kb-input-prio').value,
+    regional: projReg, // Salva o nome da unidade já limpo
+    prio: prio,
     status: 'todo',
     date: new Date().toLocaleDateString('pt-BR')
   };
 
   kanbanTasks.push(newTask);
-  saveKanban();
-  document.getElementById('kb-form-overlay').style.display = 'none';
+  saveKanban(); // Salva na nuvem e recarrega o quadro
+  
+  // Fecha o modal e limpa a seleção em segurança
+  const overlay = document.getElementById('kb-form-overlay');
+  if(overlay) overlay.style.display = 'none';
+}
+// ─── FUNÇÕES DE MOVIMENTAÇÃO E CONTROLE DO KANBAN ───
+function deleteKanbanTask(id) { 
+  if(confirm("Tem certeza que deseja excluir esta ação?")) { 
+    // O 'String()' força a comparação a ignorar se é texto ou número
+    kanbanTasks = kanbanTasks.filter(t => String(t.id) !== String(id)); 
+    saveKanban(); 
+  } 
 }
 
-function deleteKanbanTask(id) { if(confirm("Excluir esta ação?")) { kanbanTasks = kanbanTasks.filter(t => t.id !== id); saveKanban(); } }
-function moveKanbanTask(id, st) { const t = kanbanTasks.find(x => x.id === id); if(t) { t.status = st; saveKanban(); } }
-function clearKanbanBoard() { if(confirm("ATENÇÃO: Apagar TODO o quadro?")) { kanbanTasks = []; saveKanban(); } }
+function moveKanbanTask(id, st) { 
+  // O 'String()' garante que ele encontre o card correto vindo do Google Sheets
+  const t = kanbanTasks.find(x => String(x.id) === String(id)); 
+  if(t) { 
+    t.status = st; 
+    saveKanban(); 
+  } 
+}
 
+function clearKanbanBoard() { 
+  if(confirm("ATENÇÃO: Apagar TODO o quadro?")) { 
+    kanbanTasks = []; 
+    saveKanban(); 
+  } 
+}
+
+// ─── ATUALIZAÇÃO AUTOMÁTICA DA TELA ───
 const originalShowView = showView;
 showView = function(id) {
   originalShowView(id);
@@ -6484,6 +6376,50 @@ showView = function(id) {
     loadKanbanFromCloud(); // Sincroniza com o Google Sheets em segundo plano
   }
 };
+
+// ─── MOTOR DE AUTO-LOAD INFALÍVEL DA NUVEM ───
+const LINK_DA_NUVEM = "https://script.google.com/macros/s/AKfycbyv0xV7LRTjFyT51l4eelerad1SuJzJTD0xAVSEd_300OEYqRP0PYpWr6nNAgV3_lXfNw/exec"; // Cole o seu link dentro das aspas!
+
+setTimeout(async () => {
+  if (LINK_DA_NUVEM && LINK_DA_NUVEM.startsWith("http")) {
+    const dropZone = document.getElementById('drop-zone');
+    if (dropZone) {
+      dropZone.style.pointerEvents = 'none';
+      dropZone.innerHTML = '<div style="color:var(--info); font-size:16px; font-weight:bold; margin-bottom:10px;">A sincronizar com a Nuvem...</div>' +
+                           '<div style="font-size:12px; color:var(--text3);">Descarregando a base de dados do Google Sheets. Por favor, aguarde.</div>';
+    }
+    
+    try {
+      const response = await fetch(LINK_DA_NUVEM);
+      const data = await response.json();
+      
+      // 1. Carrega o contexto histórico
+      if (data.fca && data.fca.length > 0) loadFCA(data.fca);
+      if (data.termo && data.termo.length > 0) loadTermoHistory(data.termo);
+      if (data.diario && data.diario.length > 0) loadDiarioBordo(data.diario);
+      if (data.status && data.status.length > 0) loadHistoricoStatus(data.status);
+      if (data.lbp && data.lbp.length > 0) loadLinhaBasePrazo(data.lbp);
+      
+      // 2. Carrega a base principal
+      if (data.conformidade && data.conformidade.rows && data.conformidade.rows.length > 0) {
+        loadData(data.conformidade, "Google Sheets (Tempo Real)");
+      } else {
+        throw new Error("Aba CONFORMIDADE vazia.");
+      }
+
+      // 3. Carrega o CSAT
+      if (data.csat && data.csat.rows && data.csat.rows.length > 0) {
+        loadCSAT(data.csat, "Google Sheets (Tempo Real)");
+      }
+
+    } catch (e) {
+      alert("Erro ao ligar à nuvem: " + e.message);
+      location.reload();
+    }
+  }
+}, 500); // Aguarda meio segundo para garantir que a página existe antes de puxar
+
+
 </script>
 
 
@@ -6573,15 +6509,6 @@ showView = function(id) {
   </div>
 </div>
 
-<!-- Modal de relatório IA -->
-<div id="report-modal-overlay" class="report-modal-overlay" onclick="if(event.target===this)this.style.display='none'">
-  <div class="report-modal" id="report-modal-content">
-    <div style="position:sticky;top:0;display:flex;justify-content:flex-end;margin-bottom:12px;z-index:10;background:#fff;padding-bottom:8px;border-bottom:1px solid #eee">
-      <button onclick="document.getElementById('report-modal-overlay').style.display='none'" style="font-family:monospace;font-size:11px;padding:5px 14px;border:1px solid #ddd;background:#f5f5f5;color:#555;border-radius:2px;cursor:pointer">&#10005; Fechar</button>
-    </div>
-    <div id="report-modal-body"></div>
-  </div>
-</div>
 
 <!-- Modal FCA por projeto -->
 <div id="fca-modal-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:700;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)this.style.display='none'">
