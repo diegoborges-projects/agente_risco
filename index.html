@@ -101,6 +101,33 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 .filters-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
 .filter-select{font-family:var(--mono);font-size:10px;letter-spacing:.05em;padding:5px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:2px;color:var(--text2);cursor:pointer}
 .filter-select:focus{outline:none;border-color:var(--border2)}
+
+/* Barra de ferramentas padrão (busca + ordenação) usada dentro dos modais de detalhe */
+.modal-toolbar{display:flex;gap:8px;align-items:center;margin:-4px -4px 14px;padding:8px;position:sticky;top:-16px;background:var(--bg2);z-index:5;border-bottom:1px solid var(--border)}
+.modal-search-input{flex:1;font-family:var(--mono);font-size:11px;padding:6px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:2px;color:var(--text)}
+.modal-search-input::placeholder{color:var(--text3)}
+.modal-search-input:focus{outline:none;border-color:var(--border2)}
+.modal-sort-select{font-family:var(--mono);font-size:10px;letter-spacing:.04em;padding:6px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:2px;color:var(--text2);cursor:pointer;white-space:nowrap}
+.modal-sort-select:focus{outline:none;border-color:var(--border2)}
+.modal-empty{font-size:12px;color:var(--text3);padding:16px 4px;text-align:center}
+.modal-count-tag{font-family:var(--mono);font-size:9px;color:var(--text3);white-space:nowrap}
+
+/* Visão Geral — estados ativos de drill-down e painel dinâmico */
+.metric-card.ov-active{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.bar-row.ov-active{background:var(--bg4);box-shadow:-3px 0 0 var(--accent) inset}
+.ov-seg-row.ov-active{background:var(--bg4);box-shadow:-3px 0 0 var(--accent) inset}
+.ov-drill-panel{background:var(--bg2);border:1px solid var(--accent);border-radius:3px;overflow:hidden;margin-bottom:20px;animation:ovSlideIn .18s ease}
+@keyframes ovSlideIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.ov-drill-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.ov-drill-title{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.ov-drill-link{font-family:var(--mono);font-size:9px;color:var(--text3);cursor:pointer;text-decoration:none;margin-left:auto}
+.ov-drill-link:hover{color:var(--text)}
+.ov-drill-close{font-family:var(--mono);font-size:9px;color:var(--text3);cursor:pointer;background:transparent;border:1px solid var(--border);border-radius:2px;padding:3px 8px}
+.ov-drill-close:hover{color:var(--accent);border-color:var(--accent)}
+.ov-drill-body{padding:0;max-height:420px;overflow-y:auto}
+.dd-search-wrap{padding:6px 8px;position:sticky;top:0;background:var(--bg3);z-index:1}
+.dd-search-wrap input{width:100%;font-family:var(--mono);font-size:10px;padding:5px 8px;background:var(--bg1);border:1px solid var(--border);border-radius:2px;color:var(--text)}
+.dd-search-wrap input:focus{outline:none;border-color:var(--border2)}
 .nc-option{display:flex;align-items:center;gap:8px;padding:7px 12px;font-family:var(--mono);font-size:10px;letter-spacing:.05em;color:var(--text2);cursor:pointer;transition:background .1s;user-select:none}
 .nc-option:hover{background:var(--bg4);color:var(--text)}
 .nc-option.checked{color:var(--accent)}
@@ -367,6 +394,11 @@ body.light-mode .drop-zone::before, body.light-mode .drop-zone::after { border-c
 .k-btn { background: var(--bg4); border: 1px solid var(--border2); color: var(--text2); cursor: pointer; border-radius: 2px; padding: 3px 6px; font-size: 10px; transition: all .2s; }
 .k-btn:hover { background: var(--bg2); color: var(--text); border-color: var(--text3); }
 .k-btn.del:hover { color: var(--accent); border-color: var(--accent); }
+.k-desc-clamp{font-size:11px;color:var(--text2);line-height:1.5;margin-bottom:10px;white-space:pre-wrap;word-wrap:break-word;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.k-resp{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text2);background:var(--bg4);border-radius:2px;padding:3px 7px;margin-bottom:10px}
+.k-resp-empty{color:var(--text3);font-style:italic}
+.k-btn.edit:hover{color:var(--info);border-color:var(--info)}
+.k-btn.detail{color:var(--text2)}
 /* Garante que os modais de projetos abram sempre por cima do modal de Clientes */
 #nc-modal-overlay, #csat-modal-overlay, #score-modal-overlay, 
 #fca-modal-overlay, #termo-modal-overlay, #status-history-modal, #lbp-modal {
@@ -442,8 +474,29 @@ body.light-mode .drop-zone::before, body.light-mode .drop-zone::after { border-c
           <div class="section-title">Visão Geral</div>
           <div class="section-tag" id="overview-date"></div>
         </div>
-        
+
+        <div class="filters-row" id="overview-unidade-filter">
+          <div style="position:relative" id="overview-unidade-wrap">
+            <button class="filter-select" id="overview-unidade-trigger" onclick="toggleOverviewUnidadeDropdown(event)" style="min-width:200px;text-align:left;display:flex;justify-content:space-between;align-items:center;cursor:pointer">
+              <span id="overview-unidade-label">Todas as unidades</span>
+              <span style="opacity:.5;font-size:10px">▾</span>
+            </button>
+            <div id="overview-unidade-dropdown" style="display:none;position:absolute;top:calc(100% + 4px);left:0;min-width:260px;background:var(--bg3);border:1px solid var(--border2);border-radius:3px;z-index:200;padding:4px 0;box-shadow:0 8px 24px rgba(0,0,0,.5);max-height:300px;overflow-y:auto;"></div>
+          </div>
+          <span style="font-family:var(--mono);font-size:9px;color:var(--text3)">clique em um card ou barra abaixo para ver a lista de projetos correspondente</span>
+        </div>
+
         <div class="metrics-grid" id="metrics-grid"></div>
+
+        <div class="ov-drill-panel" id="overview-drill-panel" style="display:none">
+          <div class="ov-drill-header">
+            <span class="ov-drill-title" id="overview-drill-title">—</span>
+            <span class="ov-drill-link" onclick="goToProjectsFromDrill()">abrir na aba Projetos ↗</span>
+            <button class="ov-drill-close" onclick="clearOverviewDrill()">✕ Fechar</button>
+          </div>
+          <div class="ov-drill-body" id="overview-drill-list"></div>
+        </div>
+
         <div class="dashboard-grid">
           <div class="panel"><div class="panel-header"><span class="panel-title">Projetos com risco crítico por unidade</span></div><div class="panel-body" id="panel-units"></div></div>
           <div class="panel"><div class="panel-header"><span class="panel-title">Não conformidade de documentação por etapa</span></div><div class="panel-body" id="panel-etapas"></div></div>
@@ -507,27 +560,22 @@ body.light-mode .drop-zone::before, body.light-mode .drop-zone::after { border-c
         <div class="count-info" id="proj-count-info"></div>
         <div class="table-wrap">
           <table>
-            <thead><tr>
-            <th onclick="sortTable('cronStatus')" title="Status do cronograma">Cron. ↕</th>
+            <thead>
+            <tr>
+              <th style="cursor:pointer" onclick="sortTable('fap')">FAP ↕</th>
+              <th style="cursor:pointer" onclick="sortTable('status')">Status ↕</th>
+              <th style="cursor:pointer" onclick="sortTable('termometro')">Termômetro ↕</th>
+              <th style="cursor:pointer" onclick="sortTable('risco')">Risco ↕</th>
+              <th style="cursor:pointer;text-align:center" onclick="sortTable('score')">Score ↕</th>
+              <th style="cursor:pointer" onclick="sortTable('coordenador')">Coordenador ↕</th>
+              <th style="cursor:pointer" onclick="sortTable('unidade')">Unidade ↕</th>
+              <th style="cursor:pointer" onclick="sortTable('nomeParceiro')">Parceiro ↕</th>
+              <th style="cursor:pointer" onclick="sortTable('modelo')">Modelo ↕</th>
+              <th style="cursor:pointer;text-align:center" onclick="sortTable('docCount')" title="Etapas sem documentação aprovada">Não Conf. ↕</th>
+              <th onclick="sortTable('cronStatus')" title="Status do cronograma" style="cursor:pointer;text-align:center">Cron. ↕</th>
               <th id="th-fca" style="display:none;text-align:center;cursor:pointer" onclick="sortTable('fcaCount')">FCA ↕</th>
               <th id="th-csat" style="display:none;cursor:pointer" onclick="sortTable('csatLast')">CSAT ↕</th>
               <th id="th-sintomas" style="display:none;text-align:center">SINTOMAS CSAT</th>
-            </tr>
-            <tr id="col-filter-row" style="background:var(--bg3)">
-              <td><input type="text" class="col-filt" data-col="fap" placeholder="..." oninput="filterProjects()" style="width:100%;font-size:10px;padding:2px 4px;background:var(--bg1);border:1px solid var(--border);border-radius:2px;color:var(--text);font-family:var(--mono)"></td>
-              <td><select class="col-filt" data-col="status" onchange="filterProjects()" style="width:100%;font-size:10px;padding:2px;background:var(--bg1);border:1px solid var(--border);border-radius:2px;color:var(--text)"><option value="">—</option></select></td>
-              <td><select class="col-filt" data-col="termometro" onchange="filterProjects()" style="width:100%;font-size:10px;padding:2px;background:var(--bg1);border:1px solid var(--border);border-radius:2px;color:var(--text)"><option value="">—</option></select></td>
-              <td><select class="col-filt" data-col="risco" onchange="filterProjects()" style="width:100%;font-size:10px;padding:2px;background:var(--bg1);border:1px solid var(--border);border-radius:2px;color:var(--text)"><option value="">—</option></select></td>
-              <td></td>
-              <td><input type="text" class="col-filt" data-col="coordenador" placeholder="..." oninput="filterProjects()" style="width:100%;font-size:10px;padding:2px 4px;background:var(--bg1);border:1px solid var(--border);border-radius:2px;color:var(--text)"></td>
-              <td><select class="col-filt" data-col="unidade" onchange="filterProjects()" style="width:100%;font-size:10px;padding:2px;background:var(--bg1);border:1px solid var(--border);border-radius:2px;color:var(--text)"><option value="">—</option></select></td>
-              <td><input type="text" class="col-filt" data-col="nomeParceiro" placeholder="..." oninput="filterProjects()" style="width:100%;font-size:10px;padding:2px 4px;background:var(--bg1);border:1px solid var(--border);border-radius:2px;color:var(--text)"></td>
-              <td><select class="col-filt" data-col="modelo" onchange="filterProjects()" style="width:100%;font-size:10px;padding:2px;background:var(--bg1);border:1px solid var(--border);border-radius:2px;color:var(--text)"><option value="">—</option></select></td>
-              <td></td>
-              <td></td>
-              <td id="td-filt-fca" style="display:none"></td>
-              <td id="td-filt-csat" style="display:none"></td>
-              <td id="td-filt-sintomas" style="display:none"></td>
             </tr>
             <tr id="col-filter-row" style="background:var(--bg3)">
               <td><input type="text" class="col-filt" data-col="fap" placeholder="..." oninput="filterProjects()" style="width:100%;font-size:10px;padding:2px 4px;background:var(--bg1);border:1px solid var(--border);border-radius:2px;color:var(--text);font-family:var(--mono)"></td>
@@ -555,6 +603,7 @@ body.light-mode .drop-zone::before, body.light-mode .drop-zone::after { border-c
         <div class="section-header"><div class="section-title">Documentação por Etapa</div><div class="section-tag">SIM / NÃO / NÃO SE APLICA</div></div>
         
         <div class="filters-row">
+          <input class="search-input" id="search-conf" placeholder="Buscar parceiro, FAP, coordenador..." oninput="buildConformidade()">
           <select class="filter-select" id="filt-conf-status" onchange="buildConformidade()">
             <option value="">Todos os status</option><option value="EM ANDAMENTO">EM ANDAMENTO</option><option value="SUSPENSO">SUSPENSO</option>
           </select>
@@ -632,7 +681,6 @@ body.light-mode .drop-zone::before, body.light-mode .drop-zone::after { border-c
             <option value="Douglas Xavier">Douglas Xavier</option>
             <option value="Lucas Eduardo">Lucas Eduardo</option>
             <option value="Marden Chaves">Marden Chaves</option>
-            <option value="Sem regional">Sem regional</option>
           </select>
 
           <select class="filter-select" id="kb-filt-regional" onchange="renderKanban()">
@@ -750,6 +798,7 @@ body.light-mode .drop-zone::before, body.light-mode .drop-zone::after { border-c
   </div>
   
 <div class="filters-row">
+    <input class="search-input" id="search-csat" placeholder="Buscar parceiro, FAP, comentário..." oninput="renderCSATTable()">
     <select class="filter-select" id="csat-filt-nota" onchange="renderCSATTable()">
       <option value="">Todas as notas</option>
       <option>MUITO SATISFEITO</option><option>SATISFEITO</option>
@@ -773,8 +822,11 @@ body.light-mode .drop-zone::before, body.light-mode .drop-zone::after { border-c
   <div class="table-wrap">
     <table>
       <thead><tr>
-        <th>FAP</th><th>Parceiro</th><th>CSAT</th><th>Data</th>
-        <th style="text-align:center" title="Score de Risco ($SR$) Calculado">Score $SR$</th>
+        <th style="cursor:pointer" onclick="sortCSATTable('fap')">FAP ↕</th>
+        <th style="cursor:pointer" onclick="sortCSATTable('parceiro')">Parceiro ↕</th>
+        <th style="cursor:pointer" onclick="sortCSATTable('csat')">CSAT ↕</th>
+        <th style="cursor:pointer" onclick="sortCSATTable('data')">Data ↕</th>
+        <th style="text-align:center;cursor:pointer" title="Score de Risco ($SR$) Calculado — clique para ordenar" onclick="sortCSATTable('sr')">Score $SR$ ↕</th>
         <th>O Cérebro (Comentário)</th>
         <th>O Motor (Contexto)</th>
         <th>Comentário</th>
@@ -1752,34 +1804,38 @@ function loadData(parsed,filename){
   showView('overview');
 }
 
+function setProjUnidadeFilter(unidade){
+  document.querySelectorAll('#proj-unidade-dropdown input[type=checkbox]').forEach(cb=>{cb.checked = (unidade && cb.value===unidade);});
+  if(typeof updateProjUnidadeLabel==='function') updateProjUnidadeLabel();
+}
 function goToProjects(filters={}){
   document.getElementById('search-proj').value='';
   document.getElementById('filt-status').value='';
   document.getElementById('filt-termo').value='';
   document.getElementById('filt-risco').value='';
-  document.getElementById('filt-unidade').value='';
+  setProjUnidadeFilter(filters.unidade||'');
   document.getElementById('filt-coord').value='';
   document.getElementById('filt-modelo').value='';
   if(filters.status) document.getElementById('filt-status').value=filters.status;
   if(filters.risco)  document.getElementById('filt-risco').value=filters.risco;
-  if(filters.unidade) document.getElementById('filt-unidade').value=filters.unidade;
   if(filters.coordenador) document.getElementById('filt-coord').value=filters.coordenador;
   if(filters.modelo) document.getElementById('filt-modelo').value=filters.modelo;
   // Filtros especiais via variável global
-  window._projSpecialFilter=filters.termCritSemFca?'termCritSemFca':filters.csatNegativo?'csatNegativo':filters.cronAtraso?'cronAtraso':null;
+  window._projSpecialFilter=filters.termCritSemFca?'termCritSemFca':filters.csatNegativo?'csatNegativo':filters.cronAtraso?'cronAtraso':filters.temNegativas?'temNegativas':filters.etapaNao?('etapaNao:'+filters.etapaNao):null;
   filterProjects();
   showView('projects');
 }
 
-function calcStats(){
-  const t=projects.length,
-    cr=projects.filter(p=>p.risco==='Cr\u00edtico').length,
-    at=projects.filter(p=>p.risco==='Aten\u00e7\u00e3o').length,
-    bx=projects.filter(p=>p.risco==='Baixo').length,
-    su=projects.filter(p=>p.status==='SUSPENSO').length,
-    ng=projects.filter(p=>p.negatives.length>0).length;
-  const hasCRD=projects.length>0&&projects[0].hasCRD;
-  const atrasados=hasCRD?projects.filter(p=>(p.etapas['Cronograma Data']||'').toUpperCase().trim()==='N\u00c3O').length:null;
+function calcStats(arr){
+  const ps=arr||projects;
+  const t=ps.length,
+    cr=ps.filter(p=>p.risco==='Cr\u00edtico').length,
+    at=ps.filter(p=>p.risco==='Aten\u00e7\u00e3o').length,
+    bx=ps.filter(p=>p.risco==='Baixo').length,
+    su=ps.filter(p=>p.status==='SUSPENSO').length,
+    ng=ps.filter(p=>p.negatives.length>0).length;
+  const hasCRD=ps.length>0&&ps[0].hasCRD;
+  const atrasados=hasCRD?ps.filter(p=>(p.etapas['Cronograma Data']||'').toUpperCase().trim()==='N\u00c3O').length:null;
   return{total:t,criticos:cr,atencao:at,baixo:bx,suspensos:su,comNeg:ng,atrasados,hasCRD};
 }
 
@@ -1812,7 +1868,7 @@ function calcEtapaStats(arr){
 function buildAll(){
   const s=calcStats();
   buildMetrics(s);buildSidebar(s);buildOverviewPanels(s);buildProjectsTable();
-  calcAllScores();buildConformidade();buildUnits();buildCoordinators();buildVisibilidade();populateFilters();buildNCFilter();
+  calcAllScores();buildConformidade();buildUnits();buildCoordinators();buildVisibilidade();populateFilters();buildNCFilter();buildOverviewUnitFilter();renderOverviewDrill();populateKanbanFilters();
   document.getElementById('overview-date').textContent=new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'});
   document.getElementById('nb-projects').textContent=s.total;
 }
@@ -1826,36 +1882,37 @@ function isCritSemFca(p){
 }
 
 function buildOverviewUnitFilter(){
-  const sel=document.getElementById('overview-unit-select');
-  const filterDiv=document.getElementById('overview-unit-filter');
-  if(!sel||!filterDiv)return;
+  const dd=document.getElementById('overview-unidade-dropdown');
+  if(!dd)return;
   const units=[...new Set(projects.map(p=>p.unidade).filter(Boolean))].sort();
-  if(units.length===0){filterDiv.style.display='none';return;}
-  filterDiv.style.display='flex';
-  const current=sel.value;
-  sel.innerHTML='<option value="">Todas as unidades</option>'
-    +units.map(u=>'<option value="'+u.replace(/"/g,'&quot;')+'"'+(u===current?' selected':'')+'>'+u+'</option>').join('');
+  dd.innerHTML='<div class="dd-search-wrap"><input type="text" placeholder="Buscar unidade..." oninput="_filterDropdownOptions(this,\'overview-unidade-dropdown\')" onclick="event.stopPropagation()"></div>'
+    +units.map(u=>'<label class="nc-option"><input type="checkbox" value="'+u+'"'+(overviewUnits.has(u)?' checked':'')+' onchange="updateOverviewUnidadeLabel()">'+u+'</label>').join('')
+    +'<button class="nc-clear" onclick="clearOverviewUnidadeFilter()">✕ Limpar seleção</button>';
+  updateOverviewUnidadeLabel(false);
 }
 
-function onOverviewUnitChange(val){
-  if(val) overviewUnits=new Set([val]);
-  else overviewUnits=new Set();
-  rebuildOverview();
+function toggleOverviewUnidadeDropdown(e){
+  e.stopPropagation();
+  const dd=document.getElementById('overview-unidade-dropdown');
+  const isOpen=dd.style.display!=='none';
+  dd.style.display=isOpen?'none':'block';
 }
 
-function toggleOverviewUnit(unit){
-  if(overviewUnits.has(unit)) overviewUnits.delete(unit);
-  else overviewUnits.add(unit);
-  rebuildOverview();
+function updateOverviewUnidadeLabel(doRebuild){
+  const checked=Array.from(document.querySelectorAll('#overview-unidade-dropdown input:checked'));
+  overviewUnits=new Set(checked.map(c=>c.value));
+  const lbl=document.getElementById('overview-unidade-label');
+  if(lbl){
+    lbl.textContent=checked.length===0?'Todas as unidades':checked.length===1?checked[0].value:checked.length+' unidades selecionadas';
+    lbl.style.color=checked.length>0?'var(--accent)':'';
+  }
+  if(doRebuild!==false) rebuildOverview();
 }
 
-function clearOverviewFilter(){
-  overviewUnits.clear();
-  const sel=document.getElementById('overview-unit-select');
-  if(sel) sel.value='';
-  rebuildOverview();
+function clearOverviewUnidadeFilter(){
+  document.querySelectorAll('#overview-unidade-dropdown input').forEach(i=>i.checked=false);
+  updateOverviewUnidadeLabel();
 }
-
 
 function getFilteredProjects(){
   if(overviewUnits.size===0) return projects;
@@ -1867,6 +1924,128 @@ function rebuildOverview(){
   const s=calcStats(fp);
   buildMetrics(s,fp);
   buildOverviewPanels(s,fp);
+  renderOverviewDrill();
+}
+
+function _esc(s){ return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function applyOverviewDrillFromEl(el){
+  const type=el.dataset.ovType;
+  let value=null;
+  try{ value=JSON.parse(el.dataset.ovValue); }catch(e){ value=null; }
+  applyOverviewDrill(type,value,el.dataset.ovLabel);
+}
+
+// ─── DRILL-DOWN DINÂMICO DA VISÃO GERAL ───
+let overviewDrill=null; // {type,value,label}
+function _ovKey(type,value){return type+'::'+JSON.stringify(value===undefined?null:value);}
+
+function applyOverviewDrill(type,value,label){
+  const key=_ovKey(type,value);
+  if(overviewDrill&&_ovKey(overviewDrill.type,overviewDrill.value)===key){
+    overviewDrill=null;
+  } else {
+    overviewDrill={type,value,label};
+  }
+  renderOverviewDrill();
+  updateOverviewActiveStates();
+}
+
+function clearOverviewDrill(){
+  overviewDrill=null;
+  renderOverviewDrill();
+  updateOverviewActiveStates();
+}
+
+function overviewDrillMatch(p){
+  if(!overviewDrill) return false;
+  const d=overviewDrill;
+  switch(d.type){
+    case 'all': return true;
+    case 'temNegativas': return p.negatives&&p.negatives.length>0;
+    case 'risco': return p.risco===d.value;
+    case 'status': return p.status===d.value;
+    case 'unidade': return p.unidade===d.value;
+    case 'coordenador': return p.coordenador===d.value;
+    case 'modelo': return d.value==='58'?p.modelo.includes('58'):d.value==='59'?p.modelo.includes('59'):d.value==='64'?p.modelo.includes('64'):(!p.modelo.includes('58')&&!p.modelo.includes('59')&&!p.modelo.includes('64'));
+    case 'modeloRisco': {
+      const okMod=d.value.modelo==='58'?p.modelo.includes('58'):d.value.modelo==='59'?p.modelo.includes('59'):d.value.modelo==='64'?p.modelo.includes('64'):(!p.modelo.includes('58')&&!p.modelo.includes('59')&&!p.modelo.includes('64'));
+      return okMod&&p.risco===d.value.risco;
+    }
+    case 'etapaNao': { const v=(p.etapas[d.value]||'').toUpperCase().trim(); return v==='NÃO'||v==='NAO'; }
+    case 'termCritSemFca': return isCritSemFca(p);
+    case 'csatNegativo': return p.csatLast&&CSAT_NEG.includes(p.csatLast);
+    case 'cronAtraso': { const v=(p.etapas['Cronograma Data']||'').toUpperCase().trim(); return v==='NÃO'||v==='NAO'; }
+    default: return false;
+  }
+}
+
+function overviewDrillToProjFilters(){
+  if(!overviewDrill) return {};
+  const d=overviewDrill;
+  switch(d.type){
+    case 'risco': return {risco:d.value};
+    case 'status': return {status:d.value};
+    case 'unidade': return {unidade:d.value};
+    case 'coordenador': return {coordenador:d.value};
+    case 'modelo': return {modelo:d.value};
+    case 'modeloRisco': return {modelo:d.value.modelo,risco:d.value.risco};
+    case 'termCritSemFca': return {termCritSemFca:true};
+    case 'csatNegativo': return {csatNegativo:true};
+    case 'cronAtraso': return {cronAtraso:true};
+    case 'temNegativas': return {temNegativas:true};
+    case 'etapaNao': return {etapaNao:d.value};
+    default: return {};
+  }
+}
+
+function goToProjectsFromDrill(){
+  goToProjects(overviewDrillToProjFilters());
+}
+
+function goToProjectFAP(fap){
+  goToProjects({});
+  document.getElementById('search-proj').value=fap;
+  filterProjects();
+  showView('projects');
+}
+
+function renderOverviewDrillTable(list){
+  const rb=r=>r==='Crítico'?'badge-crit':r==='Atenção'?'badge-warn':'badge-ok';
+  return '<div class="table-wrap" style="border:none"><table><thead><tr>'
+    +'<th>FAP</th><th>Parceiro</th><th>Status</th><th>Risco</th><th>Coordenador</th><th>Unidade</th>'
+    +'</tr></thead><tbody>'
+    +list.map(p=>
+      '<tr style="cursor:pointer" onclick="goToProjectFAP(\''+String(p.fap).replace(/'/g,"\\'")+'\')" title="Clique para abrir este projeto na aba Projetos">'
+      +'<td style="font-family:var(--mono);font-size:11px;font-weight:600;color:var(--text)">'+p.fap+'</td>'
+      +'<td style="font-size:11px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+p.nomeParceiro+'</td>'
+      +'<td style="font-size:11px;color:var(--text3)">'+p.status+'</td>'
+      +'<td><span class="badge '+rb(p.risco)+'">'+p.risco+'</span></td>'
+      +'<td style="font-size:11px;color:var(--text3)">'+p.coordenador+'</td>'
+      +'<td style="font-size:11px;color:var(--text3)">'+p.unidade+'</td>'
+      +'</tr>'
+    ).join('')
+    +'</tbody></table></div>';
+}
+
+function renderOverviewDrill(){
+  const panel=document.getElementById('overview-drill-panel');
+  if(!panel) return;
+  if(!overviewDrill){ panel.style.display='none'; return; }
+  const fp=getFilteredProjects();
+  const list=fp.filter(overviewDrillMatch);
+  panel.style.display='';
+  const titleEl=document.getElementById('overview-drill-title');
+  if(titleEl) titleEl.textContent=overviewDrill.label+' — '+list.length+' projeto'+(list.length!==1?'s':'');
+  const bodyEl=document.getElementById('overview-drill-list');
+  if(bodyEl) bodyEl.innerHTML=list.length?renderOverviewDrillTable(list):'<div class="modal-empty">Nenhum projeto encontrado para esse filtro.</div>';
+}
+
+function updateOverviewActiveStates(){
+  const key=overviewDrill?_ovKey(overviewDrill.type,overviewDrill.value):null;
+  document.querySelectorAll('[data-ov-key]').forEach(el=>{
+    el.classList.toggle('ov-active', key!==null&&el.dataset.ovKey===key);
+  });
 }
 
 function buildMetrics(s,fp){
@@ -1880,20 +2059,32 @@ function buildMetrics(s,fp){
   // Card: CSAT negativo (última pesquisa)
   const csatNegCount=_ps.filter(p=>p.csatLast&&CSAT_NEG.includes(p.csatLast)).length;
 
+  const ovCard=(type,value,label,cls,pctSuffix,dot,title,val,sub)=>{
+    const key=_ovKey(type,value);
+    const dotHtml=dot?'<div style="position:absolute;top:0;left:0;right:0;height:2px;background:'+dot+'"></div>':'';
+    return '<div class="metric-card '+cls+' fadein" data-ov-key="'+_esc(key)+'" data-ov-type="'+_esc(type)+'" data-ov-value="'+_esc(JSON.stringify(value===undefined?null:value))+'" data-ov-label="'+_esc(label)+'" style="position:relative;'+cc+'" '+hover
+      +' onclick="applyOverviewDrillFromEl(this)" title="'+_esc(title)+'">'
+      +dotHtml
+      +'<div class="metric-label">'+label+'</div>'
+      +'<div class="metric-value"'+(dot?' style="color:'+dot+'"':'')+'>'+val+'</div>'
+      +'<div class="metric-sub">'+sub+'</div></div>';
+  };
+
   const atCard=s.hasCRD
-    ?'<div class="metric-card fadein" style="position:relative;'+cc+'" '+hover+' onclick="goToProjects({cronAtraso:true})" title="Projetos com cronograma atrasado"><div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--warn)"></div><div class="metric-label">Com atraso no cronograma</div><div class="metric-value" style="color:var(--warn)">'+s.atrasados+'</div><div class="metric-sub">'+Math.round(s.atrasados/s.total*100)+'% do portfólio ↗</div></div>'
+    ?ovCard('cronAtraso',true,'Com atraso no cronograma','',0,'var(--warn)','Ver projetos com cronograma atrasado',s.atrasados,Math.round(s.atrasados/s.total*100)+'% do portfólio ↗')
     :'';
 
   const cols=6+(s.hasCRD?1:0)+(csatLoaded?1:0);
   document.getElementById('metrics-grid').style.gridTemplateColumns='repeat('+cols+',1fr)';
   document.getElementById('metrics-grid').innerHTML=
-    '<div class="metric-card total fadein" style="'+cc+'" '+hover+' onclick="goToProjects()" title="Ver todos os projetos"><div class="metric-label">Total de projetos</div><div class="metric-value">'+s.total+'</div><div class="metric-sub">portfólio ativo ↗</div></div>'
-   +'<div class="metric-card neg fadein" style="'+cc+'" '+hover+' onclick="goToProjects()" title="Ver projetos com não conformidades"><div class="metric-label">Com não conformidades</div><div class="metric-value">'+s.comNeg+'</div><div class="metric-sub">'+Math.round(s.comNeg/s.total*100)+'% do portfólio ↗</div></div>'
-   +'<div class="metric-card crit fadein" style="'+cc+'" '+hover+' onclick="goToProjects({risco:\'Crítico\'})" title="Ver projetos críticos"><div class="metric-label">Com risco crítico</div><div class="metric-value">'+s.criticos+'</div><div class="metric-sub">'+Math.round(s.criticos/s.total*100)+'% do portfólio ↗</div></div>'
-   +'<div class="metric-card susp fadein" style="'+cc+'" '+hover+' onclick="goToProjects({status:\'SUSPENSO\'})" title="Ver projetos suspensos"><div class="metric-label">Suspensos</div><div class="metric-value">'+s.suspensos+'</div><div class="metric-sub">execução paralisada ↗</div></div>'
-   +'<div class="metric-card fadein" style="position:relative;'+cc+'" '+hover+' onclick="goToProjects({termCritSemFca:true})" title="Termômetro crítico sem FCA"><div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--accent)"></div><div class="metric-label">Term. crítico sem FCA</div><div class="metric-value" style="color:var(--accent)">'+criticoSemFca+'</div><div class="metric-sub">sem plano de ação ↗</div></div>'
-   +(csatLoaded?'<div class="metric-card fadein" style="position:relative;'+cc+'" '+hover+' onclick="goToProjects({csatNegativo:true})" title="CSAT negativo na última pesquisa"><div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--accent)"></div><div class="metric-label">CSAT negativo</div><div class="metric-value" style="color:var(--accent)">'+csatNegCount+'</div><div class="metric-sub">insat., m. insat. ou indiferente ↗</div></div>':'')
+    ovCard('all',null,'Total de projetos','total',0,null,'Ver todos os projetos',s.total,'portfólio ativo ↗')
+   +ovCard('temNegativas',true,'Com não conformidades','neg',0,null,'Ver projetos com não conformidades',s.comNeg,Math.round(s.comNeg/s.total*100)+'% do portfólio ↗')
+   +ovCard('risco','Crítico','Com risco crítico','crit',0,null,'Ver projetos críticos',s.criticos,Math.round(s.criticos/s.total*100)+'% do portfólio ↗')
+   +ovCard('status','SUSPENSO','Suspensos','susp',0,null,'Ver projetos suspensos',s.suspensos,'execução paralisada ↗')
+   +ovCard('termCritSemFca',true,'Term. crítico sem FCA','',0,'var(--accent)','Termômetro crítico sem FCA',criticoSemFca,'sem plano de ação ↗')
+   +(csatLoaded?ovCard('csatNegativo',true,'CSAT negativo','',0,'var(--accent)','CSAT negativo na última pesquisa',csatNegCount,'insat., m. insat. ou indiferente ↗'):'')
    +atCard;
+  updateOverviewActiveStates();
 }
 
 
@@ -1914,18 +2105,20 @@ function buildOverviewPanels(s,fp){
   units.forEach(u=>{ u.pctCrit = u.total ? Math.round(u.criticos/u.total*100) : 0; });
   units.sort((a,b)=>b.pctCrit-a.pctCrit);
   const maxPct=Math.max(...units.map(u=>u.pctCrit),1);
-  document.getElementById('panel-units').innerHTML=units.map(u=>
-    '<div class="bar-row" style="'+rowStyle+'" '+rowHover+' onclick="goToProjects({unidade:\''+u.name.replace(/'/g,"\\'")+'\'})">'+
+  document.getElementById('panel-units').innerHTML=units.map(u=>{
+    const key=_ovKey('unidade',u.name);
+    return '<div class="bar-row" data-ov-key="'+_esc(key)+'" data-ov-type="unidade" data-ov-value="'+_esc(JSON.stringify(u.name))+'" data-ov-label="'+_esc('Unidade: '+u.name)+'" style="'+rowStyle+'" '+rowHover+' onclick="applyOverviewDrillFromEl(this)">'+
     '<div class="bar-label" title="'+u.name+'">'+u.name+'</div>'+
     '<div class="bar-track"><div class="bar-fill c" style="width:'+Math.round(u.pctCrit/maxPct*100)+'%"></div></div>'+
-    '<div class="bar-num" title="'+u.criticos+' de '+u.total+' projetos">'+u.pctCrit+'%</div></div>'
-  ).join('');
+    '<div class="bar-num" title="'+u.criticos+' de '+u.total+' projetos">'+u.pctCrit+'%</div></div>';
+  }).join('');
   const et=calcEtapaStats(ps);
   const rel=ETAPAS_DOC.filter(e=>et[e]&&et[e].nao>0); // apenas etapas de documentação, sem Cronograma Data
   const maxE=Math.max(...rel.map(e=>et[e].nao),1);
   document.getElementById('panel-etapas').innerHTML=rel.map(e=>{
     const v=et[e],tot=v.sim+v.nao,pct=tot?Math.round(v.nao/tot*100):0;
-    return '<div class="bar-row" style="'+rowStyle+'" '+rowHover+' onclick="goToProjects({risco:\'Cr\u00edtico\'})">'+
+    const key=_ovKey('etapaNao',e);
+    return '<div class="bar-row" data-ov-key="'+_esc(key)+'" data-ov-type="etapaNao" data-ov-value="'+_esc(JSON.stringify(e))+'" data-ov-label="'+_esc('Não conformidade: '+e)+'" style="'+rowStyle+'" '+rowHover+' onclick="applyOverviewDrillFromEl(this)">'+
       '<div class="bar-label" title="'+e+'">'+e+'</div>'+
       '<div class="bar-track"><div class="bar-fill c" style="width:'+Math.round(v.nao/maxE*100)+'%"></div></div>'+
       '<div class="bar-num" title="'+pct+'% avaliados">'+v.nao+'</div></div>';
@@ -1941,9 +2134,12 @@ function buildOverviewPanels(s,fp){
   });
   document.getElementById('panel-modelo').innerHTML=Object.entries(mod).map(([name,v])=>{
     const pc=Math.round(v.criticos/v.total*100),pw=Math.round(v.atencao/v.total*100),pg=Math.round(v.baixo/v.total*100);
-    return '<div style="margin-bottom:12px;padding:8px;border-radius:2px;cursor:pointer;transition:background .12s"'
+    const keyMod=_ovKey('modelo',v.mdKey);
+    const mkKey=r=>_ovKey('modeloRisco',{modelo:v.mdKey,risco:r});
+    const mkAttrs=(type,value,label)=>'data-ov-key="'+_esc(_ovKey(type,value))+'" data-ov-type="'+_esc(type)+'" data-ov-value="'+_esc(JSON.stringify(value))+'" data-ov-label="'+_esc(label)+'"';
+    return '<div class="ov-seg-row" '+mkAttrs('modelo',v.mdKey,'Modelo: '+name)+' style="margin-bottom:12px;padding:8px;border-radius:2px;cursor:pointer;transition:background .12s"'
       +' onmouseenter="this.style.background=\'var(--bg4)\'" onmouseleave="this.style.background=\'\'"'
-      +' onclick="goToProjects({modelo:\''+v.mdKey+'\'})">'
+      +' onclick="applyOverviewDrillFromEl(this)">'
       +'<div style="display:flex;justify-content:space-between;margin-bottom:5px">'
       +'<span style="font-size:12px;color:var(--text)">'+name+'</span>'
       +'<span style="font-family:var(--mono);font-size:10px;color:var(--text3)">'+v.total+' projetos \u2197</span></div>'
@@ -1952,15 +2148,17 @@ function buildOverviewPanels(s,fp){
       +'<div class="stacked-seg bar-fill w" style="width:'+pw+'%" title="'+v.atencao+' aten\u00e7\u00e3o"></div>'
       +'<div class="stacked-seg bar-fill g" style="width:'+pg+'%" title="'+v.baixo+' baixo"></div></div>'
       +'<div style="display:flex;gap:12px;margin-top:4px;font-family:var(--mono);font-size:9px;color:var(--text3)">'
-      +'<span style="cursor:pointer;color:var(--accent)" onclick="event.stopPropagation();goToProjects({modelo:\''+v.mdKey+'\',risco:\'Cr\u00edtico\'})">&#9632; '+v.criticos+' cr\u00edtico</span>'
-      +'<span style="cursor:pointer;color:var(--warn)" onclick="event.stopPropagation();goToProjects({modelo:\''+v.mdKey+'\',risco:\'Aten\u00e7\u00e3o\'})">&#9632; '+v.atencao+' aten\u00e7\u00e3o</span>'
-      +'<span style="cursor:pointer;color:var(--ok)" onclick="event.stopPropagation();goToProjects({modelo:\''+v.mdKey+'\',risco:\'Baixo\'})">&#9632; '+v.baixo+' baixo</span></div></div>';
+      +'<span '+mkAttrs('modeloRisco',{modelo:v.mdKey,risco:'Cr\u00edtico'},'Modelo: '+name+' \u00b7 Cr\u00edtico')+' style="cursor:pointer;color:var(--accent)" onclick="event.stopPropagation();applyOverviewDrillFromEl(this)">&#9632; '+v.criticos+' cr\u00edtico</span>'
+      +'<span '+mkAttrs('modeloRisco',{modelo:v.mdKey,risco:'Aten\u00e7\u00e3o'},'Modelo: '+name+' \u00b7 Aten\u00e7\u00e3o')+' style="cursor:pointer;color:var(--warn)" onclick="event.stopPropagation();applyOverviewDrillFromEl(this)">&#9632; '+v.atencao+' aten\u00e7\u00e3o</span>'
+      +'<span '+mkAttrs('modeloRisco',{modelo:v.mdKey,risco:'Baixo'},'Modelo: '+name+' \u00b7 Baixo')+' style="cursor:pointer;color:var(--ok)" onclick="event.stopPropagation();applyOverviewDrillFromEl(this)">&#9632; '+v.baixo+' baixo</span></div></div>';
   }).join('');
   const coords=calcByGroup('coordenador',ps).filter(c=>c.criticos>0).slice(0,8);
   const maxC=Math.max(...coords.map(c=>c.criticos),1);
-  document.getElementById('panel-coords').innerHTML=coords.map(c=>
-    '<div class="bar-row" style="'+rowStyle+'" '+rowHover+' onclick="goToProjects({coordenador:\''+c.name.replace(/'/g,"\\'")+'\'})">'+'<div class="bar-label" title="'+c.name+'">'+c.name.split(' ').slice(0,2).join(' ')+'</div>'+'<div class="bar-track"><div class="bar-fill c" style="width:'+Math.round(c.criticos/maxC*100)+'%"></div></div>'+'<div class="bar-num">'+c.criticos+'</div></div>'
-  ).join('');
+  document.getElementById('panel-coords').innerHTML=coords.map(c=>{
+    const key=_ovKey('coordenador',c.name);
+    return '<div class="bar-row" data-ov-key="'+_esc(key)+'" data-ov-type="coordenador" data-ov-value="'+_esc(JSON.stringify(c.name))+'" data-ov-label="'+_esc('Coordenador: '+c.name)+'" style="'+rowStyle+'" '+rowHover+' onclick="applyOverviewDrillFromEl(this)">'+'<div class="bar-label" title="'+c.name+'">'+c.name.split(' ').slice(0,2).join(' ')+'</div>'+'<div class="bar-track"><div class="bar-fill c" style="width:'+Math.round(c.criticos/maxC*100)+'%"></div></div>'+'<div class="bar-num">'+c.criticos+'</div></div>';
+  }).join('');
+  updateOverviewActiveStates();
 
   // Painel Distribuição Status Cronograma
   const panelCrono=document.getElementById('panel-crono-dist');
@@ -1996,38 +2194,7 @@ function buildOverviewPanels(s,fp){
   }
 }
 
-function populateFilters(){
-  const us=[...new Set(projects.map(p=>p.unidade).filter(Boolean))].sort();
-  const cs=[...new Set(projects.map(p=>p.coordenador).filter(Boolean))].sort();
-  
-  const fu = document.getElementById('filt-unidade');
-  const fc = document.getElementById('filt-coord');
-  const fcuDropdown = document.getElementById('conf-unidade-dropdown'); // Menu de Múltiplas Unidades (Aba Documentação)
-  const fcc = document.getElementById('filt-conf-coord'); // Filtro de Coordenador (Aba Documentação)
-  
-  // Popula os filtros da aba principal de Projetos
-  if (fu) {
-    fu.innerHTML = '<option value="">Todas as unidades</option>';
-    us.forEach(u=>{const o=document.createElement('option');o.value=o.text=u;fu.appendChild(o);});
-  }
-  if (fc) {
-    fc.innerHTML = '<option value="">Todos os coordenadores</option>';
-    cs.forEach(c=>{const o=document.createElement('option');o.value=o.text=c;fc.appendChild(o);});
-  }
-  
-  // CORREÇÃO: Popula as caixas de seleção (checkboxes) de unidades dentro da aba de Documentação
-  if (fcuDropdown) {
-    fcuDropdown.innerHTML = us.map(u => 
-      `<label class="nc-option"><input type="checkbox" value="${u}" onchange="updateConfUnidadeLabel()">${u}</label>`
-    ).join('') + `<button class="nc-clear" onclick="clearConfUnidadeFilter()">✕ Limpar seleção</button>`;
-  }
-  
-  // Popula o seletor de coordenadores da aba de Documentação
-  if (fcc) {
-    fcc.innerHTML = '<option value="">Todos os coordenadores</option>';
-    cs.forEach(c=>{const o=document.createElement('option');o.value=o.text=c;fcc.appendChild(o);});
-  }
-}
+// (populateFilters definitiva está mais abaixo, incluindo o dropdown de unidades da aba Projetos)
 
 function handleCSATFile(file){
   if(!file)return;
@@ -2395,81 +2562,7 @@ function analyzeCSATRisk(survey, proj, pSurveys) {
   let srTotal = cerebroScore + motorScore;
   return { cerebroScore, motorScore, srTotal, clusters, motorTags };
 }
-// ─── TABELA COM FILTRAGEM SIMULTÂNEA E CRONOLOGIA ATUALIZADA ───
-function renderCSATTable() {
-  const nota = document.getElementById('csat-filt-nota').value;
-  const tipo = document.getElementById('csat-filt-tipo').value;
-  const un = document.getElementById('csat-filt-unidade').value;
-  const grpFilt = document.getElementById('csat-filt-grp') ? document.getElementById('csat-filt-grp').value : '';
-  const mesanoFilt = document.getElementById('csat-filt-mesano') ? document.getElementById('csat-filt-mesano').value : '';
-  
-  let processedSurveys = surveys.map(s => {
-    const p = projects.find(x => x.fap === s.fap);
-    const pSurveys = surveys.filter(x => x.fap === s.fap);
-    const sr = analyzeCSATRisk(s, p, pSurveys);
-    return { s, p, pSurveys, sr };
-  });
-
-  // Filtragem combinada em tempo real
-  let filtered = processedSurveys.filter(item => {
-    if(nota && item.s.csat !== nota) return false;
-    if(tipo && !item.s.tipoPesq.includes(tipo)) return false;
-    if(un && item.s.unidade !== un) return false;
-    
-    // 1. Filtragem simultânea por Gerente Regional (GRP) via Dicionário
-    if (grpFilt) {
-      const unidadeNorm = (item.s.unidade || '').trim().replace(/\s+/g, ' ');
-      const taskGRP = mapUnidadeGRP[unidadeNorm] || 'Sem regional';
-      if (!taskGRP.includes(grpFilt)) return false;
-    }
-    
-    // 2. Filtragem simultânea por Mês/Ano (mm/aaaa)
-    if (mesanoFilt) {
-      if (getMesAno(item.s.dataPesq) !== mesanoFilt) return false;
-    }
-    
-    return true;
-  });
-
-  filtered.sort((a,b) => {
-    if (b.sr.srTotal !== a.sr.srTotal) return b.sr.srTotal - a.sr.srTotal; 
-    const oa = CSAT_ORDER.indexOf(a.s.csat), ob = CSAT_ORDER.indexOf(b.s.csat);
-    return ob - oa; 
-  });
-
-  document.getElementById('csat-table-tag').textContent = filtered.length + ' pesquisas';
-  
-  document.getElementById('csat-tbody').innerHTML = filtered.map(item => {
-    const s = item.s;
-    const p = item.p;
-    const sr = item.sr;
-    
-    let srClass = 'sr-none';
-    if(sr.srTotal >= 4) srClass = 'sr-high';
-    else if(sr.srTotal >= 2) srClass = 'sr-med';
-    else if(sr.srTotal > 0) srClass = 'sr-low';
-    
-    const cerebroHtml = sr.clusters.map(c => `<span class="tag-cerebro" title="${c.desc}">${c.nome}</span>`).join('');
-    const motorHtml = sr.motorTags.map(c => `<span class="tag-motor" title="${c.desc}">${c.nome}</span>`).join('');
-    const comentarioLimpo = s.comentario ? s.comentario.replace(/"/g, '&quot;') : '';
-
-    const notaExibicao = (p && p.csatLast) ? p.csatLast : s.csat;
-    
-    // CORREÇÃO: Resgata a data de forma dinâmica da ULTIMA pesquisa cronológica vinculada àquele projeto
-    const dataExibicao = (p && p.surveys && p.surveys.length > 0) ? p.surveys[p.surveys.length - 1].dataPesq : s.dataPesq;
-
-    return `<tr style="cursor:pointer; transition: background 0.2s;" onmouseenter="this.style.background='var(--bg4)'" onmouseleave="this.style.background=''" onclick="openCSATModal('${s.fap}')" title="Clique para ver o histórico completo">
-      <td style="font-family:var(--mono);font-size:11px;font-weight:600;color:var(--text)">${s.fap||'—'}</td>
-      <td style="font-size:11px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.parceiro}</td>
-      <td style="vertical-align:middle" title="Nota atual do projeto">${csatBadge(notaExibicao, true)}</td>
-      <td style="font-size:11px;color:var(--text3)">${dataExibicao}</td>
-      <td style="text-align:center"><span class="sr-badge ${srClass}" title="Score: ${sr.srTotal} pontos">${sr.srTotal}</span></td>
-      <td style="max-width:120px; white-space:normal">${cerebroHtml || '<span style="color:var(--text3);font-size:10px">—</span>'}</td>
-      <td style="max-width:120px; white-space:normal">${motorHtml || '<span style="color:var(--text3);font-size:10px">—</span>'}</td>
-      <td style="font-size:11px;color:var(--text2);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${comentarioLimpo ? comentarioLimpo : '<i style="color:var(--text3)">Sem texto</i>'}</td>
-    </tr>`;
-  }).join('');
-}
+// (renderCSATTable definitiva está mais abaixo, com filtro por regional/mês e busca por texto padronizada)
 function mdInline(t){
   // **bold** e *italic*
   return t.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>').replace(/\*([^*]+)\*/g,'<em>$1</em>');
@@ -2587,6 +2680,7 @@ function buildConformidade() {
   const ri = document.getElementById('filt-conf-risco') ? document.getElementById('filt-conf-risco').value : '';
   const unSel = Array.from(document.querySelectorAll('#conf-unidade-dropdown input:checked')).map(i=>i.value);
   const co = document.getElementById('filt-conf-coord') ? document.getElementById('filt-conf-coord').value : '';
+  const q = document.getElementById('search-conf') ? document.getElementById('search-conf').value.trim().toLowerCase() : '';
 
   // Filtra em tempo real (incluindo Múltiplas Unidades)
   let fp = projects.filter(p => {
@@ -2594,6 +2688,7 @@ function buildConformidade() {
     if (ri && p.risco !== ri) return false;
     if (unSel.length > 0 && !unSel.includes(p.unidade)) return false;
     if (co && p.coordenador !== co) return false;
+    if (q && !((p.fap+' '+p.nomeParceiro+' '+p.coordenador).toLowerCase().includes(q))) return false;
     return true;
   });
 
@@ -2656,12 +2751,14 @@ function renderConfMatrix(filteredArray) {
     const ri = document.getElementById('filt-conf-risco') ? document.getElementById('filt-conf-risco').value : '';
     const unSel = Array.from(document.querySelectorAll('#conf-unidade-dropdown input:checked')).map(i=>i.value);
     const co = document.getElementById('filt-conf-coord') ? document.getElementById('filt-conf-coord').value : '';
+    const q = document.getElementById('search-conf') ? document.getElementById('search-conf').value.trim().toLowerCase() : '';
     
     baseArray = projects.filter(p => {
       if (st && p.status !== st) return false;
       if (ri && p.risco !== ri) return false;
       if (unSel.length > 0 && !unSel.includes(p.unidade)) return false;
       if (co && p.coordenador !== co) return false;
+      if (q && !((p.fap+' '+p.nomeParceiro+' '+p.coordenador).toLowerCase().includes(q))) return false;
       return true;
     });
   }
@@ -2910,6 +3007,19 @@ function buildVisibilidade(){
   }).join('');
 }
 
+let _ncModalList=[];
+function ncModalRefresh(){
+  const searchEl=document.getElementById('nc-modal-search');
+  const sortEl=document.getElementById('nc-modal-sort');
+  const q=(searchEl?searchEl.value:'').toLowerCase();
+  const sortVal=sortEl?sortEl.value:'original';
+  let list=_ncModalList.filter(e=>!q||e.toLowerCase().includes(q));
+  if(sortVal==='az')list=[...list].sort((a,b)=>a.localeCompare(b));
+  const body=document.getElementById('nc-modal-list');
+  body.innerHTML=list.length
+    ?list.map(e=>'<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border)"><span style="color:var(--accent);font-size:13px">✗</span><span style="font-size:12px;color:var(--text2)">'+e+'</span></div>').join('')
+    :'<div class="modal-empty">Nenhuma etapa encontrada para essa busca.</div>';
+}
 function openNCModal(fap,parceiro,coordenador){
   const p=projects.find(x=>x.fap===fap);
   if(!p)return;
@@ -2924,17 +3034,25 @@ function openNCModal(fap,parceiro,coordenador){
   const docTotal=docItems.length;
   if(docTotal===0){document.getElementById('nc-modal-body').innerHTML='<div style="font-size:12px;color:var(--text3);padding:12px">Sem não conformidades de documentação.</div>';document.getElementById('nc-modal-overlay').style.display='flex';return;}
 
-  const itens=docItems.map(e=>'<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border)"><span style="color:var(--accent);font-size:13px">✗</span><span style="font-size:12px;color:var(--text2)">'+e+'</span></div>').join('');
+  _ncModalList=docItems;
   const riscoBadge='<span style="font-family:var(--mono);font-size:9px;padding:2px 8px;border-radius:2px;background:'+rb[1]+';color:'+rb[0]+';border:1px solid '+rb[1]+'">'+p.risco+'</span>';
   document.getElementById('nc-modal-body').innerHTML=
     '<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)">'
     +riscoBadge
     +'<span style="font-size:11px;color:var(--text3)">'+docTotal+' etapa'+(docTotal>1?'s':'')+' sem documentação aprovada</span>'
     +'</div>'
+    +(docTotal>4?('<div class="modal-toolbar" style="margin-top:0">'
+      +'<input type="text" class="modal-search-input" id="nc-modal-search" placeholder="Buscar etapa..." oninput="ncModalRefresh()">'
+      +'<select class="modal-sort-select" id="nc-modal-sort" onchange="ncModalRefresh()">'
+      +'<option value="original">Ordem do fluxo</option>'
+      +'<option value="az">A-Z</option>'
+      +'</select>'
+      +'</div>'):'')
     +'<div style="padding:12px 16px;background:rgba(232,64,64,.06);border:1px solid rgba(232,64,64,.2);border-radius:3px;border-left:3px solid var(--accent)">'
     +'<div style="font-family:var(--mono);font-size:10px;font-weight:600;color:var(--accent);margin-bottom:8px">✗ Etapa concluída sem documentação aprovada</div>'
-    +itens
+    +'<div id="nc-modal-list"></div>'
     +'</div>';
+  ncModalRefresh();
   const overlay=document.getElementById('nc-modal-overlay');
   overlay.style.display='flex';
   const modal=document.getElementById('nc-modal');
@@ -2951,7 +3069,7 @@ function clearAllProjectFilters(){
   document.getElementById('filt-status').value='';
   document.getElementById('filt-termo').value='';
   document.getElementById('filt-risco').value='';
-  document.getElementById('filt-unidade').value='';
+  setProjUnidadeFilter('');
   document.getElementById('filt-coord').value='';
   document.getElementById('filt-modelo').value='';
   const csatSel=document.getElementById('filt-csat');
@@ -3054,6 +3172,14 @@ function filterProjects(){
       const v=(p.etapas['Cronograma Data']||'').toUpperCase().trim();
       if(v!=='NÃO'&&v!=='NAO')return false;
     }
+    if(window._projSpecialFilter==='temNegativas'){
+      if(!(p.negatives&&p.negatives.length>0))return false;
+    }
+    if(window._projSpecialFilter&&window._projSpecialFilter.indexOf('etapaNao:')===0){
+      const etapaNome=window._projSpecialFilter.slice(9);
+      const v=(p.etapas[etapaNome]||'').toUpperCase().trim();
+      if(v!=='NÃO'&&v!=='NAO')return false;
+    }
     return true;
   });
   renderProjectsTable();
@@ -3130,6 +3256,8 @@ document.addEventListener('click', function(e){
   if(ddConfUn && !e.target.closest('#conf-unidade-wrap')) ddConfUn.style.display = 'none';
   const ddProjUn = document.getElementById('proj-unidade-dropdown');
   if(ddProjUn && !e.target.closest('#proj-unidade-wrap')) ddProjUn.style.display = 'none';
+  const ddOvUn = document.getElementById('overview-unidade-dropdown');
+  if(ddOvUn && !e.target.closest('#overview-unidade-wrap')) ddOvUn.style.display = 'none';
 });
 
 function clearNCFilter(){
@@ -3243,12 +3371,19 @@ function renderConfMatrix() {
   }).join('');
 }
 
+function _filterDropdownOptions(inputEl, containerId){
+  const q=(inputEl.value||'').toLowerCase();
+  document.querySelectorAll('#'+containerId+' .nc-option').forEach(opt=>{
+    opt.style.display=opt.textContent.toLowerCase().includes(q)?'':'none';
+  });
+}
 function buildNCFilter(){
   const hasCRD=projects.length>0&&projects[0].hasCRD;
   const etapas=ETAPAS.filter(e=>e!=='Cronograma Data'||hasCRD);
   const dd=document.getElementById('nc-dropdown');
   if(!dd)return;
-  dd.innerHTML=etapas.map(e=>
+  dd.innerHTML='<div class="dd-search-wrap"><input type="text" placeholder="Buscar etapa..." oninput="_filterDropdownOptions(this,\'nc-dropdown\')" onclick="event.stopPropagation()"></div>'
+    +etapas.map(e=>
     '<label class="nc-option"><input type="checkbox" value="'+e+'" onchange="updateNCLabel();filterProjects()">'+e+'</label>'
   ).join('')+'<button class="nc-clear" onclick="clearNCFilter()">✕ Limpar seleção</button>';
 }
@@ -3302,6 +3437,11 @@ document.addEventListener('click',function(){
 });
 
 const CSAT_SORT_ORDER={'MUITO INSATISFEITO':0,'INSATISFEITO':1,'INDIFERENTE':2,'SATISFEITO':3,'MUITO SATISFEITO':4,'':-1};
+let csatSortKey=null,csatSortAsc=false;
+function sortCSATTable(k){
+  if(csatSortKey===k)csatSortAsc=!csatSortAsc;else{csatSortKey=k;csatSortAsc=(k==='fap'||k==='parceiro');}
+  renderCSATTable();
+}
 
 function sortTable(k){
   if(sortKey===k)sortAsc=!sortAsc;else{sortKey=k;sortAsc=false;}
@@ -3323,6 +3463,59 @@ function fcaCell(p){
     +icon+' '+ids.length+'</span></td>';
 }
 
+function _fcaStatusColor(s){
+  const u=(s||'').toUpperCase();
+  if(u.includes('CONCLU'))return'var(--ok)';
+  if(u.includes('ANDAMENTO'))return'var(--warn)';
+  if(u.includes('CANCEL'))return'var(--text3)';
+  return'var(--text3)';
+}
+function _fcaParseD(s){if(!s)return 0;const p=String(s).split(/[/ ]/);return p.length>=3?new Date(+p[2],+p[1]-1,+p[0]).getTime():0;}
+function _renderFCACard(f){
+  const col=_fcaStatusColor(f.status);
+  const origens=(f.dePesquisa?'<span style="font-family:var(--mono);font-size:8px;padding:1px 5px;border-radius:2px;background:rgba(46,204,138,.15);color:var(--ok);border:1px solid var(--ok);margin-right:4px">PESQUISA</span>':'')
+    +(f.deReclamacao?'<span style="font-family:var(--mono);font-size:8px;padding:1px 5px;border-radius:2px;background:rgba(232,64,64,.15);color:var(--accent);border:1px solid var(--accent)">RECLAMAÇÃO</span>':'');
+  const acoes=f.acoes.length?'<div style="margin-top:10px">'
+    +'<div style="font-family:var(--mono);font-size:8px;letter-spacing:.1em;color:var(--text3);margin-bottom:6px">AÇÕES</div>'
+    +f.acoes.map(a=>{
+      const ac=_fcaStatusColor(a.statusAcao);
+      return '<div style="padding:7px 10px;background:var(--bg4);border-left:2px solid '+ac+';border-radius:0 2px 2px 0;margin-bottom:5px">'
+        +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">'
+        +'<span style="font-family:var(--mono);font-size:8px;color:'+ac+'">'+a.statusAcao+'</span>'
+        +(a.responsavelAcao?'<span style="font-size:10px;color:var(--text3)">'+a.responsavelAcao+'</span>':'')
+        +(a.dataPrevistaAcao?'<span style="font-family:var(--mono);font-size:8px;color:var(--text3);margin-left:auto">⏱ '+a.dataPrevistaAcao+'</span>':'')
+        +'</div>'
+        +'<div style="font-size:12px;color:var(--text2);line-height:1.5">'+a.acao+'</div>'
+        +'</div>';
+    }).join('')+'</div>':'';
+  return '<div style="background:var(--bg3);border:1px solid var(--border);border-left:3px solid '+col+';border-radius:0 3px 3px 0;padding:14px 16px;margin-bottom:12px">'
+    +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">'
+    +'<span style="font-family:var(--mono);font-size:8px;color:var(--text3)">FCA #'+f.idFca+'</span>'
+    +'<span style="font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:2px;border:1px solid '+col+';color:'+col+'">'+f.status+'</span>'
+    +origens
+    +(f.dataCriacao?'<span style="font-size:10px;color:var(--text3);margin-left:auto">Criado: '+f.dataCriacao+'</span>':'')
+    +'</div>'
+    +(f.fato?'<div style="margin-bottom:8px"><div style="font-family:var(--mono);font-size:8px;letter-spacing:.1em;color:var(--accent);margin-bottom:3px">FATO</div><div style="font-size:12px;color:var(--text2);line-height:1.6">'+f.fato+'</div></div>':'')
+    +(f.causa?'<div style="margin-bottom:8px"><div style="font-family:var(--mono);font-size:8px;letter-spacing:.1em;color:var(--warn);margin-bottom:3px">CAUSA</div><div style="font-size:12px;color:var(--text2);line-height:1.6">'+f.causa+'</div></div>':'')
+    +(f.origemCausa?'<div style="margin-bottom:8px"><div style="font-family:var(--mono);font-size:8px;letter-spacing:.1em;color:var(--text3);margin-bottom:3px">ORIGEM DA CAUSA</div><div style="font-size:12px;color:var(--text2)">'+f.origemCausa+'</div></div>':'')
+    +(f.responsavel?'<div style="font-size:11px;color:var(--text3)">Responsável: '+f.responsavel+(f.dataPrevista?' · Prev. conclusão: '+f.dataPrevista:'')+'</div>':'')
+    +acoes
+    +'</div>';
+}
+let _fcaModalList=[];
+function fcaModalRefresh(){
+  const q=(document.getElementById('fca-modal-search').value||'').toLowerCase();
+  const sortVal=document.getElementById('fca-modal-sort').value;
+  let list=_fcaModalList.filter(f=>{
+    if(!q)return true;
+    return [f.fato,f.causa,f.responsavel,f.status,f.idFca,f.origemCausa].some(v=>(v||'').toString().toLowerCase().includes(q));
+  });
+  if(sortVal==='data_desc')list.sort((a,b)=>_fcaParseD(b.dataCriacao)-_fcaParseD(a.dataCriacao));
+  if(sortVal==='data_asc')list.sort((a,b)=>_fcaParseD(a.dataCriacao)-_fcaParseD(b.dataCriacao));
+  if(sortVal==='status')list.sort((a,b)=>(a.status||'').localeCompare(b.status||''));
+  const body=document.getElementById('fca-modal-list');
+  body.innerHTML=list.length?list.map(_renderFCACard).join(''):'<div class="modal-empty">Nenhum FCA encontrado para essa busca.</div>';
+}
 function openFCAModal(fap){
   const p=projects.find(x=>x.fap===fap);
   const fcas=fcaData.filter(f=>f.fap===fap);
@@ -3342,49 +3535,23 @@ function openFCAModal(fap){
     }
     if(row.idAcao) fcaMap[k].acoes.push(row);
   });
-  const statusColor=s=>{
-    const u=(s||'').toUpperCase();
-    if(u.includes('CONCLU'))return'var(--ok)';
-    if(u.includes('ANDAMENTO'))return'var(--warn)';
-    if(u.includes('CANCEL'))return'var(--text3)';
-    return'var(--text3)';
-  };
   document.getElementById('fca-modal-title').textContent=p?p.nomeParceiro:fap;
   document.getElementById('fca-modal-sub').textContent='FAP '+fap+(p?' · '+p.coordenador+' · '+p.unidade:'');
-  const parseD=s=>{if(!s)return 0;const p=s.split(/[/ ]/);return p.length>=3?new Date(+p[2],+p[1]-1,+p[0]).getTime():0;};
-  const fcaList=Object.values(fcaMap).sort((a,b)=>parseD(b.dataCriacao)-parseD(a.dataCriacao));
-  fcaList.forEach(f=>f.acoes.sort((a,b)=>parseD(b.dataCriacaoAcao)-parseD(a.dataCriacaoAcao)));
-  document.getElementById('fca-modal-body').innerHTML=fcaList.map(f=>{
-    const col=statusColor(f.status);
-    const origens=(f.dePesquisa?'<span style="font-family:var(--mono);font-size:8px;padding:1px 5px;border-radius:2px;background:rgba(46,204,138,.15);color:var(--ok);border:1px solid var(--ok);margin-right:4px">PESQUISA</span>':'')
-      +(f.deReclamacao?'<span style="font-family:var(--mono);font-size:8px;padding:1px 5px;border-radius:2px;background:rgba(232,64,64,.15);color:var(--accent);border:1px solid var(--accent)">RECLAMAÇÃO</span>':'');
-    const acoes=f.acoes.length?'<div style="margin-top:10px">'
-      +'<div style="font-family:var(--mono);font-size:8px;letter-spacing:.1em;color:var(--text3);margin-bottom:6px">AÇÕES</div>'
-      +f.acoes.map(a=>{
-        const ac=statusColor(a.statusAcao);
-        return '<div style="padding:7px 10px;background:var(--bg4);border-left:2px solid '+ac+';border-radius:0 2px 2px 0;margin-bottom:5px">'
-          +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">'
-          +'<span style="font-family:var(--mono);font-size:8px;color:'+ac+'">'+a.statusAcao+'</span>'
-          +(a.responsavelAcao?'<span style="font-size:10px;color:var(--text3)">'+a.responsavelAcao+'</span>':'')
-          +(a.dataPrevistaAcao?'<span style="font-family:var(--mono);font-size:8px;color:var(--text3);margin-left:auto">⏱ '+a.dataPrevistaAcao+'</span>':'')
-          +'</div>'
-          +'<div style="font-size:12px;color:var(--text2);line-height:1.5">'+a.acao+'</div>'
-          +'</div>';
-      }).join('')+'</div>':'';
-    return '<div style="background:var(--bg3);border:1px solid var(--border);border-left:3px solid '+col+';border-radius:0 3px 3px 0;padding:14px 16px;margin-bottom:12px">'
-      +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">'
-      +'<span style="font-family:var(--mono);font-size:8px;color:var(--text3)">FCA #'+f.idFca+'</span>'
-      +'<span style="font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:2px;border:1px solid '+col+';color:'+col+'">'+f.status+'</span>'
-      +origens
-      +(f.dataCriacao?'<span style="font-size:10px;color:var(--text3);margin-left:auto">Criado: '+f.dataCriacao+'</span>':'')
-      +'</div>'
-      +(f.fato?'<div style="margin-bottom:8px"><div style="font-family:var(--mono);font-size:8px;letter-spacing:.1em;color:var(--accent);margin-bottom:3px">FATO</div><div style="font-size:12px;color:var(--text2);line-height:1.6">'+f.fato+'</div></div>':'')
-      +(f.causa?'<div style="margin-bottom:8px"><div style="font-family:var(--mono);font-size:8px;letter-spacing:.1em;color:var(--warn);margin-bottom:3px">CAUSA</div><div style="font-size:12px;color:var(--text2);line-height:1.6">'+f.causa+'</div></div>':'')
-      +(f.origemCausa?'<div style="margin-bottom:8px"><div style="font-family:var(--mono);font-size:8px;letter-spacing:.1em;color:var(--text3);margin-bottom:3px">ORIGEM DA CAUSA</div><div style="font-size:12px;color:var(--text2)">'+f.origemCausa+'</div></div>':'')
-      +(f.responsavel?'<div style="font-size:11px;color:var(--text3)">Responsável: '+f.responsavel+(f.dataPrevista?' · Prev. conclusão: '+f.dataPrevista:'')+'</div>':'')
-      +acoes
-      +'</div>';
-  }).join('');
+  const fcaList=Object.values(fcaMap).sort((a,b)=>_fcaParseD(b.dataCriacao)-_fcaParseD(a.dataCriacao));
+  fcaList.forEach(f=>f.acoes.sort((a,b)=>_fcaParseD(b.dataCriacaoAcao)-_fcaParseD(a.dataCriacaoAcao)));
+  _fcaModalList=fcaList;
+  document.getElementById('fca-modal-body').innerHTML=
+    '<div class="modal-toolbar">'
+    +'<input type="text" class="modal-search-input" id="fca-modal-search" placeholder="Buscar por fato, causa, responsável, status..." oninput="fcaModalRefresh()">'
+    +'<select class="modal-sort-select" id="fca-modal-sort" onchange="fcaModalRefresh()">'
+    +'<option value="data_desc">Mais recente primeiro</option>'
+    +'<option value="data_asc">Mais antigo primeiro</option>'
+    +'<option value="status">Status (A-Z)</option>'
+    +'</select>'
+    +'<span class="modal-count-tag">'+fcaList.length+' FCA'+(fcaList.length>1?'s':'')+'</span>'
+    +'</div>'
+    +'<div id="fca-modal-list"></div>';
+  fcaModalRefresh();
   document.getElementById('fca-modal-overlay').style.display='flex';
   const modal=document.getElementById('fca-modal');
   modal.style.opacity='0';modal.style.transform='translateY(8px)';
@@ -3646,6 +3813,7 @@ function renderCSATTable() {
   const un = document.getElementById('csat-filt-unidade') ? document.getElementById('csat-filt-unidade').value : '';
   const regFilt = document.getElementById('csat-filt-regional') ? document.getElementById('csat-filt-regional').value : '';
   const mesanoFilt = document.getElementById('csat-filt-mesano') ? document.getElementById('csat-filt-mesano').value : '';
+  const q = document.getElementById('search-csat') ? document.getElementById('search-csat').value.trim().toLowerCase() : '';
   
   let processedSurveys = surveys.map(s => {
     // Forca a limpeza da FAP e usa o codigo do parceiro como segunda chave de cruzamento.
@@ -3676,15 +3844,33 @@ function renderCSATTable() {
     if (mesanoFilt) {
       if (window.getMesAno(item.s.dataPesq) !== mesanoFilt) return false;
     }
+
+    if (q) {
+      const nomeBusca = (item.p ? item.p.nomeParceiro : item.s.parceiro) || '';
+      const hay = (item.s.fap+' '+nomeBusca+' '+(item.s.comentario||'')).toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
     
     return true;
   });
 
-  filtered.sort((a,b) => {
-    if (b.sr.srTotal !== a.sr.srTotal) return b.sr.srTotal - a.sr.srTotal; 
-    const oa = CSAT_ORDER.indexOf(a.s.csat), ob = CSAT_ORDER.indexOf(b.s.csat);
-    return ob - oa; 
-  });
+  if (csatSortKey) {
+    const parseD = d => { if(!d) return 0; const p=String(d).split(/[\/ ]/); return p.length>=3 ? new Date(+p[2],+p[1]-1,+p[0]).getTime() : 0; };
+    filtered.sort((a,b) => {
+      if (csatSortKey==='csat') { const oa=CSAT_ORDER.indexOf(a.s.csat), ob=CSAT_ORDER.indexOf(b.s.csat); return csatSortAsc?oa-ob:ob-oa; }
+      if (csatSortKey==='data') { const da=parseD(a.s.dataPesq), db=parseD(b.s.dataPesq); return csatSortAsc?da-db:db-da; }
+      if (csatSortKey==='sr') return csatSortAsc ? a.sr.srTotal-b.sr.srTotal : b.sr.srTotal-a.sr.srTotal;
+      const va = csatSortKey==='parceiro' ? ((a.p?a.p.nomeParceiro:a.s.parceiro)||'') : (a.s.fap||'');
+      const vb = csatSortKey==='parceiro' ? ((b.p?b.p.nomeParceiro:b.s.parceiro)||'') : (b.s.fap||'');
+      return csatSortAsc ? String(va).localeCompare(String(vb)) : String(vb).localeCompare(String(va));
+    });
+  } else {
+    filtered.sort((a,b) => {
+      if (b.sr.srTotal !== a.sr.srTotal) return b.sr.srTotal - a.sr.srTotal; 
+      const oa = CSAT_ORDER.indexOf(a.s.csat), ob = CSAT_ORDER.indexOf(b.s.csat);
+      return ob - oa; 
+    });
+  }
 
   const tag = document.getElementById('csat-table-tag');
   if(tag) tag.textContent = filtered.length + ' pesquisas';
@@ -3730,6 +3916,41 @@ function renderCSATTable() {
 }
 
 // ─── MODAL COM LINHA DO TEMPO CRONOLÓGICA ───
+function _renderCSATHistCard(s){
+  const nota = (s.csat || '').toUpperCase().trim();
+  const isNeg = CSAT_NEG.includes(nota);
+  const borderCol = isNeg ? 'var(--accent)' : (CSAT_POS.includes(nota) ? 'var(--ok)' : 'var(--border)');
+  
+  return '<div style="padding:14px 16px;background:var(--bg3);border:1px solid var(--border);border-left:3px solid '+borderCol+';border-radius:0 3px 3px 0;margin-bottom:10px">'
+    +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">'
+    +csatBadge(s.csat)
+    +(s.tipoPesq ? '<span style="font-family:var(--mono);font-size:9px;color:var(--text3);background:var(--bg4);padding:2px 7px;border-radius:2px">'+s.tipoPesq+'</span>' : '')
+    +(s.dataPesq ? '<span style="font-size:11px;color:var(--text3)">'+s.dataPesq+'</span>' : '')
+    +'<span style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-left:auto">Pesquisa #'+s.nPesquisa+'</span>'
+    +'</div>'
+    +(s.entrevistado ? '<div style="font-size:12px;color:var(--text);margin-bottom:4px"><strong>'+s.entrevistado+'</strong>'+(s.funcao?' <span style="color:var(--text3);font-size:11px">· '+s.funcao+'</span>':'')+'</div>' : '')
+    +(s.comentario
+      ? '<div style="font-size:13px;color:var(--text2);line-height:1.7;margin-top:8px;padding:10px 12px;background:var(--bg2);border-radius:3px;border-left:2px solid '+(isNeg?'var(--accent)':'var(--ok)')+'">&#8220;'+s.comentario+'&#8221;</div>'
+      : '<div style="font-size:11px;color:var(--text3);font-style:italic;margin-top:6px">Sem comentário registrado.</div>')
+    +'</div>';
+}
+let _csatModalList=[];
+function csatModalRefresh(){
+  const searchEl=document.getElementById('csat-modal-search');
+  const sortEl=document.getElementById('csat-modal-sort');
+  const q=(searchEl?searchEl.value:'').toLowerCase();
+  const sortVal=sortEl?sortEl.value:'data_desc';
+  let list=_csatModalList.filter(s=>{
+    if(!q)return true;
+    return [s.comentario,s.entrevistado,s.tipoPesq,s.csat].some(v=>(v||'').toString().toLowerCase().includes(q));
+  });
+  list=[...list];
+  if(sortVal==='data_desc')list.sort((a,b)=>window.parseDateCSAT(b.dataPesq)-window.parseDateCSAT(a.dataPesq));
+  if(sortVal==='data_asc')list.sort((a,b)=>window.parseDateCSAT(a.dataPesq)-window.parseDateCSAT(b.dataPesq));
+  if(sortVal==='nota')list.sort((a,b)=>CSAT_ORDER.indexOf(a.csat)-CSAT_ORDER.indexOf(b.csat));
+  const body=document.getElementById('csat-modal-hist-list');
+  if(body) body.innerHTML=list.length?list.map(_renderCSATHistCard).join(''):'<div class="modal-empty">Nenhuma pesquisa encontrada para essa busca.</div>';
+}
 function openCSATModal(fap) {
   // Limpa caracteres especiais para garantir que o cruzamento ocorra
   const cleanFap = String(fap).replace(/[^\d]/g, '');
@@ -3923,24 +4144,18 @@ function openCSATModal(fap) {
       ${ps.length > 1 ? `<div style="margin-top:12px; font-size:10px; color:var(--warn); font-family:var(--mono);">⚠️ RECORRÊNCIA DETECTADA: Este projeto possui múltiplos registros históricos (${ps.length} pesquisas) mapeados no ERP.</div>` : ''}
     </div>`;
 
-  const bodyText = ps.map((s,i) => {
-    const nota = (s.csat || '').toUpperCase().trim();
-    const isNeg = CSAT_NEG_EXT.includes(nota);
-    const borderCol = isNeg ? 'var(--accent)' : (CSAT_POS.includes(nota) ? 'var(--ok)' : 'var(--border)');
-    
-    return '<div style="padding:14px 16px;background:var(--bg3);border:1px solid var(--border);border-left:3px solid '+borderCol+';border-radius:0 3px 3px 0;margin-bottom:10px">'
-      +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">'
-      +csatBadge(s.csat)
-      +(s.tipoPesq ? '<span style="font-family:var(--mono);font-size:9px;color:var(--text3);background:var(--bg4);padding:2px 7px;border-radius:2px">'+s.tipoPesq+'</span>' : '')
-      +(s.dataPesq ? '<span style="font-size:11px;color:var(--text3)">'+s.dataPesq+'</span>' : '')
-      +'<span style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-left:auto">Pesquisa #'+s.nPesquisa+'</span>'
+  const histToolbar = ps.length > 4
+    ? '<div class="modal-toolbar">'
+      +'<input type="text" class="modal-search-input" id="csat-modal-search" placeholder="Buscar por comentário, entrevistado, tipo..." oninput="csatModalRefresh()">'
+      +'<select class="modal-sort-select" id="csat-modal-sort" onchange="csatModalRefresh()">'
+      +'<option value="data_desc">Mais recente primeiro</option>'
+      +'<option value="data_asc">Mais antigo primeiro</option>'
+      +'<option value="nota">Nota (pior primeiro)</option>'
+      +'</select>'
+      +'<span class="modal-count-tag">'+ps.length+' pesquisa'+(ps.length>1?'s':'')+'</span>'
       +'</div>'
-      +(s.entrevistado ? '<div style="font-size:12px;color:var(--text);margin-bottom:4px"><strong>'+s.entrevistado+'</strong>'+(s.funcao?' <span style="color:var(--text3);font-size:11px">· '+s.funcao+'</span>':'')+'</div>' : '')
-      +(s.comentario
-        ? '<div style="font-size:13px;color:var(--text2);line-height:1.7;margin-top:8px;padding:10px 12px;background:var(--bg2);border-radius:3px;border-left:2px solid '+(isNeg?'var(--accent)':'var(--ok)')+'">&#8220;'+s.comentario+'&#8221;</div>'
-        : '<div style="font-size:11px;color:var(--text3);font-style:italic;margin-top:6px">Sem comentário registrado.</div>')
-      +'</div>';
-  }).join('');
+    : '';
+  const bodyText = histToolbar + '<div id="csat-modal-hist-list"></div>';
 
   const counts = {};
   ps.forEach(s => { 
@@ -3955,7 +4170,9 @@ function openCSATModal(fap) {
     +(p ? '<span style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-left:auto">Risco do Projeto: <span style="font-weight:600; color:'+(p.risco==='Crítico'?'var(--accent)':p.risco==='Atenção'?'var(--warn)':'var(--ok)')+'">'+p.risco+'</span></span>' : '')
     +'</div>';
 
+  _csatModalList = ps;
   document.getElementById('csat-modal-body').innerHTML = resumo + painelInteligenteHtml + visualRecorrenciaHtml + bodyText;
+  csatModalRefresh();
   document.getElementById('csat-modal-overlay').style.display = 'flex';
   const modal = document.getElementById('csat-modal');
   modal.style.opacity = '0'; modal.style.transform = 'translateY(8px)';
@@ -3996,6 +4213,8 @@ function openScoreModal(fap){
   // Calcular quais fatores estão ativos — mesma lógica do calcScore
   const _ativos=new Set();
   p.negatives.forEach(n=>{if(WEIGHTS[n]!==undefined)_ativos.add(n);});
+  // Fatores dinâmicos — suspensões, linha de base e CSAT (não estão no WEIGHTS)
+  const fatoresDinamicos=[];
 
   // CSAT
   if(csatLoaded&&p.csatNeg>0){
@@ -4091,8 +4310,7 @@ function openScoreModal(fap){
   const fatoresAtivos=Object.entries(WEIGHTS).filter(([k])=>_ativos.has(k)).sort((a,b)=>b[1]-a[1]);
   const fatoresInativos=Object.entries(WEIGHTS).filter(([k])=>!_ativos.has(k)).sort((a,b)=>b[1]-a[1]);
 
-  // Fatores dinâmicos — suspensões e linha de base (não estão no WEIGHTS)
-  const fatoresDinamicos=[];
+  // Fatores dinâmicos — suspensões e linha de base
   if(historicoStatus.length>0){
     const _suspP=historicoStatus.filter(h=>h.fap===p.fap&&h.novoStatus==='SUSPENSO'&&p.status!=='SUSPENSO');
     const _suspManual=_suspP.filter(s=>s.solicitante!=='CONTRATO');
@@ -4173,7 +4391,8 @@ function openScoreModal(fap){
     +'</div>'
     +'<div style="flex:1;border-left:1px solid var(--border);padding-left:16px">'
     +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">'
-    +'<span style="font-family:var(--mono);font-size:9px;padding:2px 8px;border-radius:2px;border:1px solid '+rb+';color:'+rb+'">'+r+'</span>'
+    +'<span style="font-family:var(--mono);font-size:9px;paddi
+ng:2px 8px;border-radius:2px;border:1px solid '+rb+';color:'+rb+'">'+r+'</span>'
     +'<span style="font-family:var(--mono);font-size:9px;color:var(--text3)">Faixa: '+faixaMin+'–'+faixaMax+'</span>'
     +'</div>'
     +'<div style="margin-bottom:10px;padding:6px 10px;background:'+bgMotivo+';border-left:2px solid '+blMotivo+';border-radius:0 3px 3px 0">'
@@ -4374,8 +4593,7 @@ function openStatusHistory(fap, parceiro){
   const footer=suspensoes.length>0
     ?`<div style="margin-top:16px;padding:14px 16px;background:rgba(240,165,0,.08);border:1px solid rgba(240,165,0,.25);border-radius:3px;display:flex;gap:32px;align-items:center">
         <div style="text-align:center">
-          <div style="font-family:var(--mono);font-size:9px;letter-spacing:.08em;color:var(--text3);margin-bottom:4px">TOTAL DE SU
-SPENSÕES</div>
+          <div style="font-family:var(--mono);font-size:9px;letter-spacing:.08em;color:var(--text3);margin-bottom:4px">TOTAL DE SUSPENSÕES</div>
           <div style="font-size:28px;font-weight:700;color:var(--warn)">${suspensoes.length}</div>
         </div>
         <div style="text-align:center">
@@ -4426,6 +4644,47 @@ function openLBPModal(fap, parceiro){
 }
 
 
+function _termoStatusColor(s){
+  const u=(s||'').toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+  if(u.includes('CRIT'))return'var(--accent)';
+  if(u.includes('ATEN'))return'var(--warn)';
+  return'var(--ok)';
+}
+function _termoParseD(s){if(!s)return 0;const p=String(s).split('/');return p.length===3?new Date(+p[2],+p[1]-1,+p[0]).getTime():0;}
+function _renderTermoCard(t){
+  const col=_termoStatusColor(t.status);
+  const isAtual=t.versao.includes('ATUAL');
+  return '<div style="padding:14px 16px;background:var(--bg3);border:1px solid var(--border);border-left:3px solid '+col+';border-radius:0 3px 3px 0;margin-bottom:10px">'
+    +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap">'
+    +'<span style="font-family:var(--mono);font-size:9px;padding:2px 8px;border-radius:2px;border:1px solid '+col+';color:'+col+'">'+t.status+'</span>'
+    +(isAtual?'<span style="font-family:var(--mono);font-size:8px;padding:1px 6px;border-radius:2px;background:'+col+';color:#fff">ATUAL</span>':'')
+    +(t.dataAlteracao?'<span style="font-size:11px;color:var(--text3)">'+t.dataAlteracao+'</span>':'')
+    +(t.responsavel?'<span style="font-size:11px;color:var(--text3);margin-left:auto">' +t.responsavel+'</span>':'')
+    +'</div>'
+    +(t.descricao?'<div style="font-size:13px;color:var(--text2);line-height:1.7;padding:8px 12px;background:var(--bg2);border-radius:3px">'+t.descricao+'</div>':'')
+    +'</div>';
+}
+let _termoModalList=[];
+function termoModalRefresh(){
+  const q=(document.getElementById('termo-modal-search').value||'').toLowerCase();
+  const sortVal=document.getElementById('termo-modal-sort').value;
+  let list=_termoModalList.filter(t=>{
+    if(!q)return true;
+    return [t.status,t.responsavel,t.descricao].some(v=>(v||'').toString().toLowerCase().includes(q));
+  });
+  if(sortVal==='data_desc')list.sort((a,b)=>_termoParseD(b.dataAlteracao)-_termoParseD(a.dataAlteracao));
+  if(sortVal==='data_asc')list.sort((a,b)=>_termoParseD(a.dataAlteracao)-_termoParseD(b.dataAlteracao));
+  if(sortVal==='status')list.sort((a,b)=>(a.status||'').localeCompare(b.status||''));
+  if(sortVal==='atual'){
+    list.sort((a,b)=>{
+      if(a.versao.includes('ATUAL')&&!b.versao.includes('ATUAL'))return -1;
+      if(!a.versao.includes('ATUAL')&&b.versao.includes('ATUAL'))return 1;
+      return _termoParseD(b.dataAlteracao)-_termoParseD(a.dataAlteracao);
+    });
+  }
+  const body=document.getElementById('termo-modal-list');
+  body.innerHTML=list.length?list.map(_renderTermoCard).join(''):'<div class="modal-empty">Nenhum registro encontrado para essa busca.</div>';
+}
 function openTermoHistory(fap){
   const p=projects.find(x=>x.fap===fap);
   const fapNorm=(fap||'').replace(/\.0$/,'');
@@ -4436,36 +4695,31 @@ function openTermoHistory(fap){
       // Atual primeiro, depois por data de alteração decrescente
       if(a.versao.includes('ATUAL')&&!b.versao.includes('ATUAL'))return -1;
       if(!a.versao.includes('ATUAL')&&b.versao.includes('ATUAL'))return 1;
-      const pd=s=>{if(!s)return 0;const p=s.split('/');return p.length===3?new Date(+p[2],+p[1]-1,+p[0]).getTime():0;};
-      return pd(b.dataAlteracao)-pd(a.dataAlteracao);
+      return _termoParseD(b.dataAlteracao)-_termoParseD(a.dataAlteracao);
     });
 
   const overlay=document.getElementById('termo-modal-overlay');
   document.getElementById('termo-modal-title').textContent=p?p.nomeParceiro:fap;
   document.getElementById('termo-modal-sub').textContent='FAP '+fap+(p?' · '+p.coordenador+' · '+p.unidade:'');
 
-  const statusColor=s=>{
-    const u=(s||'').toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
-    if(u.includes('CRIT'))return'var(--accent)';
-    if(u.includes('ATEN'))return'var(--warn)';
-    return'var(--ok)';
-  };
-
-  document.getElementById('termo-modal-body').innerHTML=history.length
-    ? history.map((t,i)=>{
-        const col=statusColor(t.status);
-        const isAtual=t.versao.includes('ATUAL');
-        return '<div style="padding:14px 16px;background:var(--bg3);border:1px solid var(--border);border-left:3px solid '+col+';border-radius:0 3px 3px 0;margin-bottom:10px">'
-          +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap">'
-          +'<span style="font-family:var(--mono);font-size:9px;padding:2px 8px;border-radius:2px;border:1px solid '+col+';color:'+col+'">'+t.status+'</span>'
-          +(isAtual?'<span style="font-family:var(--mono);font-size:8px;padding:1px 6px;border-radius:2px;background:'+col+';color:#fff">ATUAL</span>':'')
-          +(t.dataAlteracao?'<span style="font-size:11px;color:var(--text3)">'+t.dataAlteracao+'</span>':'')
-          +(t.responsavel?'<span style="font-size:11px;color:var(--text3);margin-left:auto">' +t.responsavel+'</span>':'')
-          +'</div>'
-          +(t.descricao?'<div style="font-size:13px;color:var(--text2);line-height:1.7;padding:8px 12px;background:var(--bg2);border-radius:3px">'+t.descricao+'</div>':'')
-          +'</div>';
-      }).join('')
-    : '<div style="font-size:12px;color:var(--text3);padding:12px">Nenhum histórico de termômetro disponível.</div>';
+  _termoModalList=history;
+  if(!history.length){
+    document.getElementById('termo-modal-body').innerHTML='<div style="font-size:12px;color:var(--text3);padding:12px">Nenhum histórico de termômetro disponível.</div>';
+  } else {
+    document.getElementById('termo-modal-body').innerHTML=
+      '<div class="modal-toolbar">'
+      +'<input type="text" class="modal-search-input" id="termo-modal-search" placeholder="Buscar por status, responsável, descrição..." oninput="termoModalRefresh()">'
+      +'<select class="modal-sort-select" id="termo-modal-sort" onchange="termoModalRefresh()">'
+      +'<option value="atual">Atual primeiro</option>'
+      +'<option value="data_desc">Mais recente primeiro</option>'
+      +'<option value="data_asc">Mais antigo primeiro</option>'
+      +'<option value="status">Status (A-Z)</option>'
+      +'</select>'
+      +'<span class="modal-count-tag">'+history.length+' registro'+(history.length>1?'s':'')+'</span>'
+      +'</div>'
+      +'<div id="termo-modal-list"></div>';
+    termoModalRefresh();
+  }
 
   overlay.style.display='flex';
   const modal=document.getElementById('termo-modal');
@@ -5496,18 +5750,6 @@ function showView(id){
       document.getElementById('churn-cards').innerHTML='<div style="color:var(--accent);padding:20px;font-size:12px">Erro: '+e.message+'</div>';
     }
   }
-  if(id==='clientes'){
-    if(projects.length>0){
-      try{buildClientes();}
-      catch(e){
-        const tb=document.getElementById('clientes-tbody');
-        if(tb) tb.innerHTML='<tr><td colspan="10" style="color:red;padding:20px">Erro: '+e.message+'</td></tr>';
-      }
-    } else {
-      const tb=document.getElementById('clientes-tbody');
-      if(tb) tb.innerHTML='<tr><td colspan="10" style="color:var(--text3);padding:20px">Carregue um arquivo para ver os clientes.</td></tr>';
-    }
-  }
 }
 
 function showUpload(){
@@ -5679,84 +5921,6 @@ function calcClienteRisco(ps) {
   if (ps.some(p => p.risco === 'Crítico')) return 'Crítico';
   if (ps.some(p => p.risco === 'Atenção')) return 'Atenção';
   return 'Baixo';
-}
-
-function buildClientes() {
-  // Agrupar projetos por cliente (nomeParceiro)
-  const map = {};
-  projects.forEach(p => {
-    const key = p.nomeParceiro || 'Sem nome';
-    if (!map[key]) map[key] = { nome: key, projetos: [] };
-    map[key].projetos.push(p);
-  });
-
-  clientesData = Object.values(map).map(c => {
-    const ps = c.projetos;
-    const risco = calcClienteRisco(ps);
-    const score = calcClienteScore(ps);
-    const nCrit = ps.filter(p => p.risco === 'Crítico').length;
-    const nAten = ps.filter(p => p.risco === 'Atenção').length;
-    const nCsatNeg = ps.filter(p => p.csatNeg > 0).length;
-    const nSusp = ps.filter(p => p.status === 'SUSPENSO').length;
-    const temReclam = ps.some(p => fcaData.some(f =>
-      f.fap === p.fap && f.deReclamacao === true &&
-      f.status !== 'CONCLUÍDO' && f.status !== 'CONCLUIDO'
-    ));
-    return { nome: c.nome, projetos: ps, risco, score, nProjetos: ps.length, nCrit, nAten, nCsatNeg, nSusp, temReclam };
-  });
-
-  renderClientes();
-}
-
-function sortClientes(key) {
-  if (clientesSortKey === key) clientesSortAsc = !clientesSortAsc;
-  else { clientesSortKey = key; clientesSortAsc = key === 'nome'; }
-  renderClientes();
-}
-
-function renderClientes() {
-  const search = (document.getElementById('search-clientes')?.value || '').toLowerCase();
-  const filtRisco = document.getElementById('filt-cliente-risco')?.value || '';
-  const ro = { 'Crítico': 0, 'Atenção': 1, 'Baixo': 2 };
-
-  let list = clientesData.filter(c => {
-    if (search && !c.nome.toLowerCase().includes(search)) return false;
-    if (filtRisco && c.risco !== filtRisco) return false;
-    return true;
-  });
-
-  list.sort((a, b) => {
-    let va = a[clientesSortKey], vb = b[clientesSortKey];
-    if (clientesSortKey === 'risco') { va = ro[va] ?? 3; vb = ro[vb] ?? 3; }
-    if (typeof va === 'string') return clientesSortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
-    return clientesSortAsc ? va - vb : vb - va;
-  });
-
-  document.getElementById('clientes-count').textContent = list.length + ' cliente' + (list.length !== 1 ? 's' : '');
-
-  const rb = r => r === 'Crítico' ? 'badge-crit' : r === 'Atenção' ? 'badge-warn' : 'badge-ok';
-  const sc = r => r === 'Crítico' ? 'var(--accent)' : r === 'Atenção' ? 'var(--warn)' : 'var(--ok)';
-
-  document.getElementById('clientes-tbody').innerHTML = list.map(c => {
-    const col = sc(c.risco);
-    const _cidx = clientesData.indexOf(c);
-    return '<tr style="border-bottom:1px solid var(--border);cursor:pointer" onclick="openClienteModal(' + _cidx + ')">'
-      + '<td style="padding:10px 10px;font-size:12px;font-weight:600;color:var(--text)">' + c.nome + '</td>'
-      + '<td style="padding:10px;text-align:center"><span class="badge ' + rb(c.risco) + '">' + c.risco + '</span></td>'
-      + '<td style="padding:10px;text-align:center;cursor:pointer" title="Ver composição do score" onclick="event.stopPropagation();openClienteScoreModal(' + clientesData.indexOf(c) + ')">'
-      +   '<div style="display:flex;align-items:center;gap:6px;justify-content:center">'
-      +   '<div style="width:60px;height:4px;background:var(--bg4);border-radius:2px;overflow:hidden"><div style="height:100%;width:' + c.score + '%;background:' + col + ';border-radius:2px"></div></div>'
-      +   '<span style="font-family:var(--mono);font-size:11px;color:' + col + ';font-weight:600">' + c.score + '</span>'
-      +   '</div></td>'
-      + '<td style="padding:10px;text-align:center;font-family:var(--mono);font-size:11px;color:var(--text2)">' + c.nProjetos + '</td>'
-      + '<td style="padding:10px;text-align:center;font-family:var(--mono);font-size:11px;color:' + (c.nCrit > 0 ? 'var(--accent)' : 'var(--text3)') + '">' + (c.nCrit || '—') + '</td>'
-      + '<td style="padding:10px;text-align:center;font-family:var(--mono);font-size:11px;color:' + (c.nAten > 0 ? 'var(--warn)' : 'var(--text3)') + '">' + (c.nAten || '—') + '</td>'
-      + '<td style="padding:10px;text-align:center;font-family:var(--mono);font-size:11px;color:' + (c.nCsatNeg > 0 ? 'var(--accent)' : 'var(--text3)') + '">' + (c.nCsatNeg || '—') + '</td>'
-      + '<td style="padding:10px;text-align:center;font-family:var(--mono);font-size:11px;color:' + (c.nSusp > 0 ? 'var(--warn)' : 'var(--text3)') + '">' + (c.nSusp || '—') + '</td>'
-      + '<td style="padding:10px;text-align:center">' + (c.temReclam ? '<span style="font-family:var(--mono);font-size:9px;padding:2px 6px;border-radius:2px;background:rgba(232,64,64,.15);color:var(--accent);border:1px solid rgba(232,64,64,.3)">⚠ SIM</span>' : '<span style="color:var(--text3);font-size:11px">—</span>') + '</td>'
-      + '<td style="padding:10px;text-align:right"><span style="font-size:10px;color:var(--text3)">ver detalhes ↗</span></td>'
-      + '</tr>';
-  }).join('');
 }
 
 function openClienteModal(idx) {
@@ -6081,6 +6245,16 @@ const mapUnidadeGRP = {
   "ADMINISTRATIVO DELIVERY ENTERPRISE": "Daniela Dias"
 };
 let kbSelectedProj = null;
+let kbEditingTaskId = null;
+
+function populateKanbanFilters(){
+  const sel=document.getElementById('kb-filt-regional');
+  if(!sel) return;
+  const current=sel.value;
+  const units=[...new Set(projects.map(p=>p.unidade).filter(Boolean))].sort();
+  sel.innerHTML='<option value="">Todas as unidades</option>'
+    +units.map(u=>'<option value="'+u.replace(/"/g,'&quot;')+'"'+(u===current?' selected':'')+'>'+u+'</option>').join('');
+}
 
 async function loadKanbanFromCloud() {
   const btn = document.getElementById('nav-backlog');
@@ -6147,22 +6321,35 @@ function renderKanban() {
       if(counts[task.status] !== undefined) counts[task.status]++;
       
       const prioClass = task.prio === 'Alta' ? 'prio-alta' : task.prio === 'Média' ? 'prio-media' : '';
-      const btnBack = task.status === 'done' ? `<button class="k-btn" onclick="moveKanbanTask('${task.id}', 'doing')">◀</button>` : task.status === 'doing' ? `<button class="k-btn" onclick="moveKanbanTask('${task.id}', 'todo')">◀</button>` : '';
-      const btnNext = task.status === 'todo' ? `<button class="k-btn" onclick="moveKanbanTask('${task.id}', 'doing')">▶</button>` : task.status === 'doing' ? `<button class="k-btn" onclick="moveKanbanTask('${task.id}', 'done')">▶</button>` : '';
+      const btnBack = task.status === 'done' ? `<button class="k-btn" onclick="moveKanbanTask('${task.id}', 'doing')" title="Voltar para Em Andamento">◀</button>` : task.status === 'doing' ? `<button class="k-btn" onclick="moveKanbanTask('${task.id}', 'todo')" title="Voltar para A Fazer">◀</button>` : '';
+      const btnNext = task.status === 'todo' ? `<button class="k-btn" onclick="moveKanbanTask('${task.id}', 'doing')" title="Avançar para Em Andamento">▶</button>` : task.status === 'doing' ? `<button class="k-btn" onclick="moveKanbanTask('${task.id}', 'done')" title="Concluir">▶</button>` : '';
+      const respHtml = task.responsavel
+        ? `<div class="k-resp">👤 ${task.responsavel}</div>`
+        : `<div class="k-resp k-resp-empty">👤 Sem responsável definido</div>`;
 
       const cardHTML = `
         <div class="k-card ${prioClass}">
-          <div style="font-family:var(--mono);font-size:9px;color:var(--text3);margin-bottom:3px">FAP ${task.fap}</div>
-          <div class="k-title" style="margin-bottom:8px">${task.parceiro}</div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px">
+            <span style="font-family:var(--mono);font-size:9px;color:var(--text3)">FAP ${task.fap}</span>
+            <span style="font-family:var(--mono);font-size:8px;padding:1px 6px;border-radius:2px;border:1px solid ${task.prio==='Alta'?'var(--accent)':task.prio==='Média'?'var(--warn)':'var(--border2)'};color:${task.prio==='Alta'?'var(--accent)':task.prio==='Média'?'var(--warn)':'var(--text3)'}">${task.prio||'—'}</span>
+          </div>
+          <div class="k-title" style="margin-bottom:8px" title="${task.parceiro}">${task.parceiro}</div>
           <div style="font-size:10px;color:var(--accent);background:rgba(232,64,64,.1);padding:3px 6px;border-radius:2px;border:1px solid rgba(232,64,64,.2);margin-bottom:10px;display:inline-block">🚨 ${task.problema}</div>
-          <div class="k-desc"><strong>Ação:</strong> ${task.acao}</div>
+          ${respHtml}
+          <div class="k-desc-clamp" title="Clique em 'Detalhe' para ver o plano de ação completo"><strong>Ação:</strong> ${task.acao}</div>
           <div class="k-meta">
             <span>${task.regional ? `📍 ${task.regional}` : '—'}</span>
             <span>📅 ${task.date}</span>
           </div>
           <div class="k-meta" style="margin-top:8px; border:none; padding-top:0;">
-            <button class="k-btn del" onclick="deleteKanbanTask('${task.id}')">Excluir</button>
-            <div class="k-actions">${btnBack}${btnNext}</div>
+            <div class="k-actions">
+              <button class="k-btn detail" onclick="openKanbanDetail('${task.id}')" title="Ver plano de ação completo">🔍 Detalhe</button>
+              <button class="k-btn edit" onclick="openKanbanForm('${task.id}')" title="Editar esta ação">✎ Editar</button>
+            </div>
+            <div class="k-actions">
+              ${btnBack}${btnNext}
+              <button class="k-btn del" onclick="deleteKanbanTask('${task.id}')" title="Excluir esta ação">Excluir</button>
+            </div>
           </div>
         </div>`;
       if(cols[task.status]) cols[task.status].innerHTML += cardHTML;
@@ -6175,47 +6362,38 @@ function renderKanban() {
     console.error("Erro ao desenhar o Kanban:", e);
   }
 }
-// ─── SALVAMENTO COM VALIDAÇÃO MULTI-GERENTE ───
-function saveNewKanbanTask() {
-  if (!kbSelectedProj) { alert("Selecione um projeto primeiro!"); return; }
-  
-  const selectedGrpFilt = document.getElementById('kb-filt-grp').value;
-  const projectGRP = mapUnidadeGRP[kbSelectedProj.unidade] || 'Sem regional';
+// (saveNewKanbanTask definitiva está mais abaixo, com validação anti-travamento e suporte a edição)
 
-  // CORREÇÃO: Permite salvar se o filtro selecionado fizer parte da lista de GRPs responsáveis
-  if (selectedGrpFilt && !projectGRP.includes(selectedGrpFilt)) {
-    alert(`Acesso bloqueado:\n\nEste projeto pertence à unidade [${kbSelectedProj.unidade}], que é de responsabilidade de: [${projectGRP}].\n\nVocê está utilizando o filtro de [${selectedGrpFilt}]. Modifique o filtro superior para prosseguir.`);
-    return;
+// ─── LÓGICA DO FORMULÁRIO DINÂMICO (criação e edição) ───
+function openKanbanForm(taskId){
+  const overlay=document.getElementById('kb-form-overlay');
+  const titleEl=document.getElementById('kb-form-title');
+  overlay.style.display='flex';
+  document.getElementById('kb-proj-results').style.display='none';
+
+  if(taskId){
+    const task=kanbanTasks.find(t=>String(t.id)===String(taskId));
+    if(!task) return;
+    kbEditingTaskId=task.id;
+    kbSelectedProj=projects.find(p=>p.fap===task.fap)||{fap:task.fap,nomeParceiro:task.parceiro,unidade:task.regional,negatives:[]};
+    if(titleEl) titleEl.textContent='Editar Ação';
+    document.getElementById('kb-input-proj').value=task.fap+' - '+task.parceiro;
+    document.getElementById('kb-input-proj').disabled=true;
+    kbSelectProj(kbSelectedProj.fap, task.problema);
+    document.getElementById('kb-input-acao').value=task.acao||'';
+    document.getElementById('kb-input-prio').value=task.prio||'Média';
+    document.getElementById('kb-input-responsavel').value=task.responsavel||'';
+  } else {
+    kbEditingTaskId=null;
+    kbSelectedProj=null;
+    if(titleEl) titleEl.textContent='Nova Ação Direcionada';
+    document.getElementById('kb-input-proj').disabled=false;
+    document.getElementById('kb-input-proj').value='';
+    document.getElementById('kb-problema-wrap').style.display='none';
+    document.getElementById('kb-input-acao').value='';
+    document.getElementById('kb-input-prio').value='Média';
+    document.getElementById('kb-input-responsavel').value='';
   }
-
-  const acao = document.getElementById('kb-input-acao').value.trim();
-  if (!acao) { alert("Descreva o plano de ação!"); return; }
-
-  const newTask = {
-    id: Date.now().toString(),
-    fap: kbSelectedProj.fap,
-    parceiro: kbSelectedProj.nomeParceiro,
-    problema: document.getElementById('kb-input-prob').value,
-    acao: acao,
-    regional: kbSelectedProj.unidade || '',
-    prio: document.getElementById('kb-input-prio').value,
-    status: 'todo',
-    date: new Date().toLocaleDateString('pt-BR')
-  };
-
-  kanbanTasks.push(newTask);
-  saveKanban();
-  document.getElementById('kb-form-overlay').style.display = 'none';
-}
-
-// ─── LÓGICA DO FORMULÁRIO DINÂMICO ───
-function openKanbanForm() {
-  document.getElementById('kb-form-overlay').style.display = 'flex';
-  document.getElementById('kb-input-proj').value = '';
-  document.getElementById('kb-proj-results').style.display = 'none';
-  document.getElementById('kb-problema-wrap').style.display = 'none';
-  document.getElementById('kb-input-acao').value = '';
-  kbSelectedProj = null;
 }
 
 function kbSearchProj() {
@@ -6236,8 +6414,10 @@ function kbSearchProj() {
 }
 
 // ─── SELEÇÃO DO PROJETO COM UNIFICAÇÃO DE NÃO CONFORMIDADES DE DOCUMENTOS ───
-function kbSelectProj(fap) {
-  kbSelectedProj = projects.find(p => p.fap === fap);
+function kbSelectProj(fap, preselectProblema) {
+  const found = projects.find(p => p.fap === fap);
+  if(found) kbSelectedProj = found;
+  else if(!kbSelectedProj || kbSelectedProj.fap!==fap) return;
   if(!kbSelectedProj) return;
 
   document.getElementById('kb-input-proj').value = kbSelectedProj.fap + ' - ' + kbSelectedProj.nomeParceiro;
@@ -6279,8 +6459,13 @@ function kbSelectProj(fap) {
       optionsHtml += `<option value="Projeto Suspenso">Projeto Suspenso</option>`;
     }
     optionsHtml += `<option value="Outro Motivo (Preventivo)">Outro Motivo (Preventivo)</option>`;
+    // Garante que, em modo edição, o problema já salvo apareça como opção mesmo se não mapear nativamente
+    if(preselectProblema && !optionsHtml.includes(`value="${preselectProblema}"`)){
+      optionsHtml = `<option value="${preselectProblema}">${preselectProblema}</option>` + optionsHtml;
+    }
     
     probSelect.innerHTML = optionsHtml;
+    if(preselectProblema) probSelect.value = preselectProblema;
   }
 
   const probWrap = document.getElementById('kb-problema-wrap');
@@ -6323,26 +6508,72 @@ function saveNewKanbanTask() {
   const prioEl = document.getElementById('kb-input-prio');
   const prio = prioEl ? prioEl.value : 'Média';
 
-  const newTask = {
-    id: Date.now().toString(),
-    fap: kbSelectedProj.fap,
-    parceiro: kbSelectedProj.nomeParceiro,
-    problema: problema,
-    acao: acao,
-    regional: projReg, // Salva o nome da unidade já limpo
-    prio: prio,
-    status: 'todo',
-    date: new Date().toLocaleDateString('pt-BR')
-  };
+  const respEl = document.getElementById('kb-input-responsavel');
+  const responsavel = respEl ? respEl.value.trim() : '';
 
-  kanbanTasks.push(newTask);
+  if(kbEditingTaskId){
+    const task=kanbanTasks.find(t=>String(t.id)===String(kbEditingTaskId));
+    if(task){
+      task.problema=problema;
+      task.acao=acao;
+      task.prio=prio;
+      task.responsavel=responsavel;
+      task.regional=projReg;
+      task.editedDate=new Date().toLocaleDateString('pt-BR');
+    }
+  } else {
+    const newTask = {
+      id: Date.now().toString(),
+      fap: kbSelectedProj.fap,
+      parceiro: kbSelectedProj.nomeParceiro,
+      problema: problema,
+      acao: acao,
+      responsavel: responsavel,
+      regional: projReg, // Salva o nome da unidade já limpo
+      prio: prio,
+      status: 'todo',
+      date: new Date().toLocaleDateString('pt-BR')
+    };
+    kanbanTasks.push(newTask);
+  }
+
+  kbEditingTaskId=null;
   saveKanban(); // Salva na nuvem e recarrega o quadro
   
   // Fecha o modal e limpa a seleção em segurança
   const overlay = document.getElementById('kb-form-overlay');
   if(overlay) overlay.style.display = 'none';
+  document.getElementById('kb-input-proj').disabled=false;
 }
 // ─── FUNÇÕES DE MOVIMENTAÇÃO E CONTROLE DO KANBAN ───
+function openKanbanDetail(taskId){
+  const task=kanbanTasks.find(t=>String(t.id)===String(taskId));
+  if(!task) return;
+  const prioColor=task.prio==='Alta'?'var(--accent)':task.prio==='Média'?'var(--warn)':'var(--text3)';
+  const statusLabel=task.status==='todo'?'A Fazer':task.status==='doing'?'Em Andamento':'Concluído';
+  document.getElementById('kb-detail-title').textContent=task.parceiro;
+  document.getElementById('kb-detail-sub').textContent='FAP '+task.fap+(task.regional?' · '+task.regional:'');
+  document.getElementById('kb-detail-body').innerHTML=
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">'
+    +'<span style="font-family:var(--mono);font-size:9px;padding:2px 8px;border-radius:2px;border:1px solid '+prioColor+';color:'+prioColor+'">Prioridade: '+(task.prio||'—')+'</span>'
+    +'<span style="font-family:var(--mono);font-size:9px;padding:2px 8px;border-radius:2px;border:1px solid var(--border2);color:var(--text2)">Status: '+statusLabel+'</span>'
+    +'</div>'
+    +'<div style="margin-bottom:12px"><div style="font-family:var(--mono);font-size:9px;letter-spacing:.08em;color:var(--accent);margin-bottom:4px">OCORRÊNCIA</div>'
+    +'<div style="font-size:12px;color:var(--text2);padding:8px 10px;background:var(--bg3);border-radius:3px">'+(task.problema||'—')+'</div></div>'
+    +'<div style="margin-bottom:12px"><div style="font-family:var(--mono);font-size:9px;letter-spacing:.08em;color:var(--info);margin-bottom:4px">PLANO DE AÇÃO COMPLETO</div>'
+    +'<div style="font-size:13px;color:var(--text2);line-height:1.7;padding:10px 12px;background:var(--bg3);border-radius:3px;white-space:pre-wrap">'+(task.acao||'—')+'</div></div>'
+    +'<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3)">'
+    +'<span>👤 '+(task.responsavel||'Sem responsável definido')+'</span>'
+    +'<span>📅 Criado em '+(task.date||'—')+(task.editedDate?' · Editado em '+task.editedDate:'')+'</span>'
+    +'</div>';
+  document.getElementById('kb-detail-edit-btn').onclick=()=>{closeKanbanDetail();openKanbanForm(task.id);};
+  document.getElementById('kb-detail-del-btn').onclick=()=>{closeKanbanDetail();deleteKanbanTask(task.id);};
+  document.getElementById('kb-detail-overlay').style.display='flex';
+}
+function closeKanbanDetail(event){
+  if(event && event.target !== event.currentTarget) return;
+  document.getElementById('kb-detail-overlay').style.display='none';
+}
 function deleteKanbanTask(id) { 
   if(confirm("Tem certeza que deseja excluir esta ação?")) { 
     // O 'String()' força a comparação a ignorar se é texto ou número
@@ -6428,8 +6659,8 @@ setTimeout(async () => {
  <div id="kb-form-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:2000;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)this.style.display='none'">
   <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:4px;width:500px;max-width:95vw;display:flex;flex-direction:column">
     <div style="padding:14px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
-      <div style="font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--info)">Nova Ação Direcionada</div>
-      <button onclick="document.getElementById('kb-form-overlay').style.display='none'" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px">&#10005;</button>
+      <div id="kb-form-title" style="font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--info)">Nova Ação Direcionada</div>
+      <button onclick="document.getElementById('kb-form-overlay').style.display='none';document.getElementById('kb-input-proj').disabled=false" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px">&#10005;</button>
     </div>
     <div style="padding:20px;display:flex;flex-direction:column;gap:12px">
       
@@ -6451,12 +6682,33 @@ setTimeout(async () => {
 
       <div style="display:flex;gap:12px">
         <div style="flex:1">
+          <label style="font-size:11px;color:var(--text3);margin-bottom:4px;display:block">Responsável pelo plano de ação</label>
+          <input type="text" id="kb-input-responsavel" class="search-input" style="width:100%" placeholder="Nome do responsável">
+        </div>
+        <div style="flex:1">
           <label style="font-size:11px;color:var(--text3);margin-bottom:4px;display:block">Prioridade</label>
           <select id="kb-input-prio" class="filter-select" style="width:100%"><option>Alta</option><option selected>Média</option><option>Baixa</option></select>
         </div>
       </div>
       
       <button class="btn btn-accent" style="margin-top:10px;padding:10px" onclick="saveNewKanbanTask()">Salvar Plano de Ação</button>
+    </div>
+  </div>
+</div>
+<div id="kb-detail-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;align-items:center;justify-content:center" onclick="closeKanbanDetail(event)">
+  <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:4px;width:480px;max-width:90vw;max-height:80vh;overflow:hidden;display:flex;flex-direction:column;position:relative" onclick="event.stopPropagation()">
+    <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+      <div>
+        <div style="font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--info);margin-bottom:4px">Plano de ação</div>
+        <div id="kb-detail-title" style="font-size:15px;font-weight:600;color:var(--text)">—</div>
+        <div id="kb-detail-sub" style="font-size:11px;color:var(--text3);margin-top:2px">—</div>
+      </div>
+      <button onclick="closeKanbanDetail()" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:18px;flex-shrink:0">&#10005;</button>
+    </div>
+    <div id="kb-detail-body" style="padding:18px 20px;overflow-y:auto"></div>
+    <div style="padding:12px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end">
+      <button class="k-btn edit" id="kb-detail-edit-btn" style="padding:6px 14px">✎ Editar</button>
+      <button class="k-btn del" id="kb-detail-del-btn" style="padding:6px 14px">Excluir</button>
     </div>
   </div>
 </div>
